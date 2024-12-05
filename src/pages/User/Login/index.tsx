@@ -1,14 +1,7 @@
-import { login } from '@/services/ant-design-pro/api';
 import { LOGO } from '@/constants/index';
-import {
-  LockOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
-import {
-  LoginForm,
-  ProFormCheckbox,
-  ProFormText,
-} from '@ant-design/pro-components';
+import { login } from '@/services/ant-design-pro/api';
+import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import { LoginForm, ProFormCheckbox, ProFormText } from '@ant-design/pro-components';
 import { Helmet, history, Link, useModel } from '@umijs/max';
 import { Alert, message, Tabs } from 'antd';
 import { createStyles } from 'antd-style';
@@ -45,7 +38,7 @@ const useStyles = createStyles(({ token }) => {
       height: '100vh',
       overflow: 'auto',
       backgroundImage:
-        "url('https://img1.baidu.com/it/u=2815459153,3314739410&fm=253&fmt=auto&app=120&f=JPEG?w=608&h=342')",
+        "url('https://s1.imagehub.cc/images/2024/12/02/b0a4cabe37ec34fa7352fae6dd7501b8.jpg')",
       backgroundSize: '100% 100%',
     },
   };

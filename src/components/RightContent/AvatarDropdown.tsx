@@ -1,11 +1,12 @@
 import { outLogin } from '@/services/ant-design-pro/api';
 import { LogoutOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
-import { Spin } from 'antd';
+//import type { GetProps } from 'antd';
+import { Input, Select, Spin } from 'antd';
 import { createStyles } from 'antd-style';
 import { stringify } from 'querystring';
 import type { MenuInfo } from 'rc-menu/lib/interface';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { flushSync } from 'react-dom';
 import HeaderDropdown from '../HeaderDropdown';
 
@@ -19,6 +20,12 @@ export const AvatarName = () => {
   const { currentUser } = initialState || {};
   return <span className="anticon">{currentUser?.username}</span>;
 };
+
+//type SearchProps = GetProps<typeof Input.Search>;
+
+const { Search } = Input;
+
+const { Option } = Select;
 
 const useStyles = createStyles(({ token }) => {
   return {
@@ -60,6 +67,8 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
   };
   const { styles } = useStyles();
 
+  const [addonValue, setAddonValue] = useState<string>('title');
+
   const { initialState, setInitialState } = useModel('@@initialState');
 
   const onMenuClick = useCallback(
@@ -71,8 +80,10 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
         });
         loginOut();
         return;
+      } else if (key === 'personal_page') {
+      } else if (key === 'personal_setting') {
       }
-      history.push(`/account/${key}`);
+      history.push(`/${key}`);
     },
     [setInitialState],
   );
@@ -124,15 +135,44 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
     },
   ];
 
+  //更新 select 的值
+  const handleAddonChange = (value: string) => {
+    setAddonValue(value);
+  };
+
+  //处理搜索事件
+  const onSearch = (value: string) => {
+    console.log('Selected addon value:', addonValue);
+    console.log('Search input value:', value);
+  };
+
+  //搜索选项，默认在title
+  const selectBefore = (
+    <Select defaultValue="title" onChange={handleAddonChange}>
+      <Option value="title">标题</Option>
+      <Option value="user">用户</Option>
+    </Select>
+  );
+
   return (
-    <HeaderDropdown
-      menu={{
-        selectedKeys: [],
-        onClick: onMenuClick,
-        items: menuItems,
-      }}
-    >
-      {children}
-    </HeaderDropdown>
+    <>
+      <Search //搜索框
+        addonBefore={selectBefore}
+        placeholder="搜索"
+        allowClear
+        onSearch={onSearch}
+        style={{ width: 304 }}
+        enterButton
+      />
+      <HeaderDropdown
+        menu={{
+          selectedKeys: [],
+          onClick: onMenuClick,
+          items: menuItems,
+        }}
+      >
+        {children}
+      </HeaderDropdown>
+    </>
   );
 };
