@@ -86,10 +86,10 @@ export async function rule(
 export async function updateRule(options?: { [key: string]: any }) {
   return request<API.RuleListItem>('/api/rule', {
     method: 'POST',
-    data:{
+    data: {
       method: 'update',
       ...(options || {}),
-    }
+    },
   });
 }
 
@@ -97,10 +97,10 @@ export async function updateRule(options?: { [key: string]: any }) {
 export async function addRule(options?: { [key: string]: any }) {
   return request<API.RuleListItem>('/api/rule', {
     method: 'POST',
-    data:{
+    data: {
       method: 'post',
       ...(options || {}),
-    }
+    },
   });
 }
 
@@ -108,9 +108,52 @@ export async function addRule(options?: { [key: string]: any }) {
 export async function removeRule(options?: { [key: string]: any }) {
   return request<Record<string, any>>('/api/rule', {
     method: 'POST',
-    data:{
+    data: {
       method: 'delete',
       ...(options || {}),
+    },
+  });
+}
+
+/*
+获取首页帖子的信息 输入一个数字index 返回按时间排序 index*12-12 ~ index * 12的帖子
+请返回如下信息
+  res.send({
+    "posts": [
+      {
+        "imageUrl": "https://s1.imagehub.cc/images/2024/12/06/438bd75e9bf65736dfb1fcff1cea48f7.md.jpg",
+        "avatarUrl": "https://s1.imagehub.cc/images/2024/12/03/816ffbdae7a44ede51ce0bc1bb406baa.th.jpg",
+        "title": "Post 1",
+        "username": "Kuman",
+        "likes": "114514"
+      },
+      ...
+     ]
     }
+   );
+*/
+export async function getHomePagePost(options?: { [key: string]: any }) {
+  return request<Record<string, any>>('/api/getHomePagePost', {
+    method: 'POST',
+    data: {
+      method: 'delete',
+      ...(options || {}),
+    },
+  });
+}
+/*
+获取所有帖子的数量
+请返回如下信息
+  res.send({
+    total:"100"
+  });
+*/
+export async function getTotalPosts(options?: { [key: string]: any }) {
+  return request<Record<string, any>>('/api/getTotalPosts', {
+    method: 'POST',
+    data: {
+      method: 'delete',
+      ...(options || {}),
+    },
   });
 }

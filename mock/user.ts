@@ -47,7 +47,7 @@ export default {
       avatarUrl: 'https://s1.imagehub.cc/images/2024/12/03/816ffbdae7a44ede51ce0bc1bb406baa.th.jpg',
       userid: '1',
       //1 管理员 other 普通用户 详细看scr/access.ts
-      userRole: 2,
+      userRole: 1,
     });
   },
   // GET POST 可省略

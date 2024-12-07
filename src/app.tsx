@@ -103,7 +103,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
         width: '331px',
       },
     ],
-    //左下角跳去api
+    //左下角跳去api文档
     // links: isDev
     //   ? [
     //       <Link key="openapi" to="/umi/plugin/openapi" target="_blank">
