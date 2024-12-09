@@ -15,12 +15,13 @@ declare namespace API {
   type LoginResult = {
     status?: string;
     type?: string;
-    currentAuthority?: string;
   };
 
   type RegisterResult = number;
 
   type ResetResult = number;
+
+  type UpdateResult = number;
 
   type PageParams = {
     current?: number;
@@ -69,6 +70,27 @@ declare namespace API {
     gender?:string;
     type?: string;
   };
+
+  type updateParams = {
+    userAccount?: string;
+    username?: string;
+    gender?:string;
+    type?: string;
+  };
+
+  type newPersonInfoParams = {
+    userAccount?: string;
+    userPassword?: string;
+    checkPassword?: string;
+    username?: string;
+    gender?:string;
+    avatarUrl?: string;
+    type?: string;
+  }
+
+  type avaterParams = {
+
+  }
 
   type ResetParams = {
     userAccount?: string;

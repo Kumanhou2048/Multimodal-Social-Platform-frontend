@@ -91,7 +91,8 @@ const Login: React.FC = () => {
       }
       // 如果失败去设置用户错误信息
       // console.log(msg);
-      setUserLoginState(user);
+      setUserLoginState({ status: 'error' });
+      message.error('用户不存在，请检查用户名和密码！');
     } catch (error) {
       const defaultLoginFailureMessage = '登录失败，请重试！';
       console.log(error);
@@ -140,7 +141,7 @@ const Login: React.FC = () => {
           />
 
           {status === 'error' && loginType === 'account' && (
-            <LoginMessage content={'错误的用户名和密码(admin/ant.design)'} />
+            <LoginMessage content={'错误的密码'} />
           )}
           {type === 'account' && (
             <>
@@ -156,6 +157,7 @@ const Login: React.FC = () => {
                     required: true,
                     message: '用户名是必填项！',
                   },
+                  { pattern: /^[a-zA-Z0-9]{3,10}$/, message: '用户名长度需在3到10个字符之间，且只能包含字母或数字！' },
                 ]}
               />
               <ProFormText.Password
@@ -170,6 +172,7 @@ const Login: React.FC = () => {
                     required: true,
                     message: '密码是必填项！',
                   },
+                  { min: 6, max: 20, message: '密码长度需在6到20个字符之间！' },
                 ]}
               />
             </>

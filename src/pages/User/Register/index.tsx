@@ -74,6 +74,8 @@ const Register: React.FC = () => {
         // 跳转到登录页
         history.push(`/user/login?redirect=${redirect}`);
         return;
+      } else if(id===-2){
+        message.error("账号已经存在，请重置密码");
       } else {
         throw new Error(`register error id=${id}`);
       }
@@ -143,6 +145,10 @@ const Register: React.FC = () => {
                     required: true,
                     message: '用户名是必填项！',
                   },
+                  {
+                    max:20,
+                    message:'用户名长度不能超过20个字符',
+                  }
                 ]}
               />
               <ProFormText
@@ -156,6 +162,10 @@ const Register: React.FC = () => {
                   {
                     required: true,
                     message: '用户名是必填项！',
+                  },
+                  {
+                    pattern: /^[a-zA-Z0-9]{3,10}$/,
+                    message: '账号只能包含字母和数字，长度需在3到10个字符之间！',
                   },
                 ]}
               />
@@ -171,6 +181,11 @@ const Register: React.FC = () => {
                     required: true,
                     message: '密码是必填项！',
                   },
+                  {
+                    min: 6,
+                    max: 20,
+                    message: '密码长度需在6到20个字符之间！',
+                  },
                 ]}
               />
               <ProFormText.Password
@@ -184,6 +199,11 @@ const Register: React.FC = () => {
                   {
                     required: true,
                     message: '密码是必填项！',
+                  },
+                  {
+                    min: 6,
+                    max: 20,
+                    message: '密码长度需在6到20个字符之间！',
                   },
                 ]}
               />

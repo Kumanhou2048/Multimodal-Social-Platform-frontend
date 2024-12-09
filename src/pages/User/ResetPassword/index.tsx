@@ -7,6 +7,7 @@ import { message, Tabs } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { useState } from 'react';
 import Settings from '../../../../config/defaultSettings';
+import {Link} from "@@/exports";
 const useStyles = createStyles(({ token }) => {
   return {
     action: {
@@ -72,6 +73,8 @@ const ResetPassword: React.FC = () => {
         // 跳转到登录页
         history.push(`/user/login?redirect=${redirect}`);
         return;
+      }else if(id===-2){
+        message.error("账号不存在！请注册");
       } else {
         throw new Error(`reset error id=${id}`);
       }
@@ -105,7 +108,7 @@ const ResetPassword: React.FC = () => {
             minWidth: 280,
             maxWidth: '75vw',
           }}
-          logo={<img alt="logo" src={LOGO} />}
+          logo={<img alt="logo" src={LOGO}/>}
           title="小蓝书"
           subTitle={'最方便的社区网站'}
           initialValues={{
@@ -133,7 +136,7 @@ const ResetPassword: React.FC = () => {
                 name="userAccount"
                 fieldProps={{
                   size: 'large',
-                  prefix: <UserOutlined />,
+                  prefix: <UserOutlined/>,
                 }}
                 placeholder={'请输入账号'}
                 rules={[
@@ -141,13 +144,14 @@ const ResetPassword: React.FC = () => {
                     required: true,
                     message: '用户名是必填项！',
                   },
+                  {pattern: /^[a-zA-Z0-9]{3,10}$/, message: '用户名长度需在3到10个字符之间，且只能包含字母或数字！'},
                 ]}
               />
               <ProFormText.Password
                 name="userPassword"
                 fieldProps={{
                   size: 'large',
-                  prefix: <LockOutlined />,
+                  prefix: <LockOutlined/>,
                 }}
                 placeholder={'请输入新密码'}
                 rules={[
@@ -155,13 +159,14 @@ const ResetPassword: React.FC = () => {
                     required: true,
                     message: '密码是必填项！',
                   },
+                  {min: 6, max: 20, message: '密码长度需在6到20个字符之间！'},
                 ]}
               />
               <ProFormText.Password
                 name="checkPassword"
                 fieldProps={{
                   size: 'large',
-                  prefix: <LockOutlined />,
+                  prefix: <LockOutlined/>,
                 }}
                 placeholder={'请再次输入新密码'}
                 rules={[
@@ -169,10 +174,15 @@ const ResetPassword: React.FC = () => {
                     required: true,
                     message: '密码是必填项！',
                   },
+                  {min: 6, max: 20, message: '密码长度需在6到20个字符之间！'},
                 ]}
               />
             </>
           )}
+          <p>
+            想起密码了？
+            <Link to="/user/login">登录</Link>
+          </p>
         </LoginForm>
       </div>
     </div>

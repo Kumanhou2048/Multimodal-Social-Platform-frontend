@@ -8,11 +8,6 @@ const waitTime = (time: number = 100) => {
   });
 };
 
-async function getFakeCaptcha(req: Request, res: Response) {
-  await waitTime(2000);
-  return res.json('captcha-xxx');
-}
-
 const { ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION } = process.env;
 
 /**
@@ -43,11 +38,12 @@ export default {
       return;
     }
     res.send({
-      username: 'Kuman',
+      username: 'cyw',
       avatarUrl: 'https://s1.imagehub.cc/images/2024/12/03/816ffbdae7a44ede51ce0bc1bb406baa.th.jpg',
       userid: '1',
       //1 管理员 other 普通用户 详细看scr/access.ts
       userRole: 1,
+      gender: 0
     });
   },
   // GET POST 可省略
@@ -146,5 +142,4 @@ export default {
       path: '/base/category/list',
     });
   },
-  'GET  /api/login/captcha': getFakeCaptcha,
 };

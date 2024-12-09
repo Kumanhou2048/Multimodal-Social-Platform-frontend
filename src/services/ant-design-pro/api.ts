@@ -54,6 +54,18 @@ export async function reset(body: API.ResetParams, options?: { [key: string]: an
   });
 }
 
+/** 注册接口 POST /api/register/account */
+export async function update(body: API.updateParams, options?: { [key: string]: any }) {
+  return request<API.UpdateResult>('/api/update', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
 /** 此处后端没有提供注释 GET /api/notices */
 export async function getNotices(options?: { [key: string]: any }) {
   return request<API.NoticeIconList>('/api/notices', {
