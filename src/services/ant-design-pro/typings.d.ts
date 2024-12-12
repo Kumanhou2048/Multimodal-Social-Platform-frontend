@@ -67,14 +67,14 @@ declare namespace API {
     userPassword?: string;
     checkPassword?: string;
     username?: string;
-    gender?:string;
+    gender?: string;
     type?: string;
   };
 
   type updateParams = {
     userAccount?: string;
     username?: string;
-    gender?:string;
+    gender?: string;
     type?: string;
   };
 
@@ -83,21 +83,19 @@ declare namespace API {
     userPassword?: string;
     checkPassword?: string;
     username?: string;
-    gender?:string;
+    gender?: string;
     avatarUrl?: string;
     type?: string;
-  }
+  };
 
-  type avaterParams = {
-
-  }
+  type avaterParams = {};
 
   type ResetParams = {
     userAccount?: string;
     userPassword?: string;
     checkPassword?: string;
     type?: string;
-  }
+  };
 
   type ErrorResponse = {
     /** 业务约定的错误码 */
@@ -128,5 +126,45 @@ declare namespace API {
     datetime?: string;
     description?: string;
     type?: NoticeIconItemType;
+  };
+
+  type TotalPosts = {
+    total: number;
+  };
+
+  type HomePagePost = {
+    posts: Post[];
+  };
+
+  type LikesMessage = {
+    status?: string;
+  };
+
+  type SearchPagePost = {
+    posts: Post[];
+  };
+
+  type TotalSearchPosts = {
+    total: number;
+  };
+
+  type PostDetails = {
+    posterAvatarUrl: string;
+    posterName: string;
+    postTime: string;
+    postTitle: string;
+    postContent: string;
+  };
+
+  type PostPicture = {
+    pictures: Picture[];
+  };
+
+  type PostComment = {
+    comments: Comment[];
+  };
+
+  type MakeAComment = {
+    status: string;
   };
 }

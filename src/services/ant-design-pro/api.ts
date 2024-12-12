@@ -127,45 +127,87 @@ export async function removeRule(options?: { [key: string]: any }) {
   });
 }
 
-/*
-获取首页帖子的信息 输入一个数字index 返回按时间排序 index*12-12 ~ index * 12的帖子
-请返回如下信息
-  res.send({
-    "posts": [
-      {
-        "imageUrl": "https://s1.imagehub.cc/images/2024/12/06/438bd75e9bf65736dfb1fcff1cea48f7.md.jpg",
-        "avatarUrl": "https://s1.imagehub.cc/images/2024/12/03/816ffbdae7a44ede51ce0bc1bb406baa.th.jpg",
-        "title": "Post 1",
-        "username": "Kuman",
-        "likes": "114514"
-      },
-      ...
-     ]
-    }
-   );
-*/
-export async function getHomePagePost(options?: { [key: string]: any }) {
-  return request<Record<string, any>>('/api/getHomePagePost', {
-    method: 'POST',
+//获取首页帖子的信息 输入参数一个数字index 返回按时间排序 index*12-12 ~ index * 12的帖子
+/** 获取首页帖子的信息 GET /api/getHomePagePost */
+export async function getHomePagePost(index: number) {
+  return request<API.HomePagePost>('/api/getHomePagePost', {
+    method: 'GET',
+    params: { index },
+  });
+}
+//获取所有帖子的数量
+/** 获取所有帖子的数量 GET /api/getTotalPosts */
+export async function getTotalPosts() {
+  return request<API.TotalPosts>('/api/getTotalPosts', {
+    method: 'GET',
+  });
+}
+
+//给某个帖子点赞 输入点赞者id 点赞的帖子id 一个布尔值 true代表点赞 false代表取消点赞
+/** 给某个帖子点赞 PATCH /api/Likes **/
+export async function Likes(data: { userId: any; postId: string; newLikedState: boolean }) {
+  return request<API.LikesMessage>('/api/Likes', {
+    method: 'PATCH',
     data: {
-      method: 'delete',
-      ...(options || {}),
+      userId: data.userId,
+      postId: data.postId,
+      newLikedState: data.newLikedState,
     },
   });
 }
-/*
-获取所有帖子的数量
-请返回如下信息
-  res.send({
-    total:"100"
+
+//获取搜索页帖子的信息 输入参数string key 返回标题或者内容有key的帖子
+/** 获取首页帖子的信息 GET /api/getSearchPagePost */
+export async function getSearchPagePost(key: any) {
+  return request<API.SearchPagePost>('/api/getSearchPagePost', {
+    method: 'GET',
+    key: key,
   });
-*/
-export async function getTotalPosts(options?: { [key: string]: any }) {
-  return request<Record<string, any>>('/api/getTotalPosts', {
+}
+
+//获取符合搜索帖子的数量
+/** 获取所有帖子的数量 GET /api/getTotalSearchPosts */
+export async function getTotalSearchPosts(key: any) {
+  return request<API.TotalSearchPosts>('/api/getTotalSearchPosts', {
+    method: 'GET',
+    key: key,
+  });
+}
+
+//根据帖子ID返回帖子的详细信息
+/** 获取帖子的详细信息 GET /api/getPostDetail */
+export async function getPostDetail(postId: any) {
+  return request<API.PostDetails>('/api/getPostDetail', {
+    method: 'GET',
+    postId: postId,
+  });
+}
+
+//根据帖子ID返回该帖子的全部图片
+/** 获取帖子的全部图片 GET /api/getPostPicture*/
+export async function getPostPicture(postId: any) {
+  return request<API.PostPicture>('/api/getPostPicture', {
+    method: 'GET',
+    postId: postId,
+  });
+}
+
+//根据帖子ID返回该帖子的评论
+/** 获取帖子的全部图片 GET /api/getPostComment*/
+export async function getPostComment(postId: any) {
+  return request<API.PostComment>('/api/getPostComment', {
+    method: 'GET',
+    postId: postId,
+  });
+}
+
+//发表评论
+/** 发表评论 POST /api/makeAComment*/
+export async function makeAComment(userId: any, postId: any, content: string) {
+  return request<API.MakeAComment>('/api/makeAComment', {
     method: 'POST',
-    data: {
-      method: 'delete',
-      ...(options || {}),
-    },
+    userId: userId,
+    postId: postId,
+    content: content,
   });
 }

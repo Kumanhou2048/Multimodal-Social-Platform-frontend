@@ -1,9 +1,10 @@
-import { getHomePagePost, getTotalPosts, Likes } from '@/services/ant-design-pro/api';
+import { getSearchPagePost, getTotalSearchPosts, Likes } from '@/services/ant-design-pro/api';
 import { history } from '@@/core/history';
+import { useParams } from '@@/exports';
 import { LikeFilled, LikeOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
-import { Avatar, Button, Card, message, Pagination, PaginationProps, Space } from 'antd';
+import { Avatar, Button, Card, message, Space } from 'antd';
 import React, { useEffect, useState } from 'react';
 
 const { Meta } = Card;
@@ -61,7 +62,8 @@ const Post: React.FC<{
   title: string;
   username: string;
   like: string;
-}> = ({ id, scr, avatar_scr, title, username, like }) => {
+  searchKey: any;
+}> = ({ id, scr, avatar_scr, title, username, like, searchKey }) => {
   const [likeCount, setLikeCount] = useState<number>(parseInt(like, 10));
 
   const handleClick = () => {
@@ -71,6 +73,21 @@ const Post: React.FC<{
 
   const handleLikeChange = (newLikeState: boolean) => {
     setLikeCount(newLikeState ? likeCount + 1 : likeCount - 1); // 根据点赞状态更新数量
+  };
+
+  //关键字高亮显示
+  const highlightText = (text: string, key: string) => {
+    if (!key) return text;
+    const parts = text.split(new RegExp(`(${key})`, 'gi'));
+    return parts.map((part, index) =>
+      part.toLowerCase() === key.toLowerCase() ? (
+        <span key={index} style={{ background: 'yellow' }}>
+          {part}
+        </span>
+      ) : (
+        part
+      ),
+    );
   };
   return (
     <>
@@ -92,7 +109,7 @@ const Post: React.FC<{
         onClick={handleClick}
       >
         <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
-          <Meta title={title} />
+          <Meta title={<span>{highlightText(title, searchKey)}</span>} />
           <div
             style={{
               display: 'flex',
@@ -135,59 +152,33 @@ const Post: React.FC<{
   );
 };
 
-const Welcome: React.FC = () => {
+const SearchPage: React.FC = () => {
+  const { key } = useParams<{ key: string }>();
   const [posts, setPosts] = useState<any[]>([]);
   const [totalPosts, setTotalPosts] = useState<number>(0);
-  const [pageNumber, setPageNumber] = useState<number>(1);
-  const pageSize = 12;
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [postsResult, totalPostsResult] = await Promise.all([
-          getHomePagePost(pageNumber),
-          getTotalPosts(),
+          getSearchPagePost({ key: key }),
+          getTotalSearchPosts({ key: key }),
         ]);
 
-        setPosts(postsResult.posts || []);
+        setPosts(postsResult.posts);
         setTotalPosts(totalPostsResult.total);
-
-        const totalPages = Math.ceil(totalPostsResult.total / pageSize);
-        if (pageNumber > totalPages) {
-          setPageNumber(totalPages);
-        }
       } catch (error) {
         console.error('获取数据失败', error);
       }
     };
 
     fetchData();
-  }, [pageNumber, totalPosts]);
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const pageFromUrl = parseInt(urlParams.get('page') || '1', 10);
-    const totalPages = Math.ceil(totalPosts / pageSize);
-
-    let page = pageFromUrl;
-    if (pageFromUrl > totalPages) {
-      page = totalPages;
-    } else if (pageFromUrl < 1) {
-      page = 1;
-    }
-
-    setPageNumber(page);
   }, [totalPosts]);
-
-  const onChange: PaginationProps['onChange'] = (page) => {
-    setPageNumber(page);
-    window.scrollTo(0, 0);
-    window.history.pushState({}, '', `?page=${page}`);
-  };
 
   return (
     <PageContainer
       header={{
-        title: '',
+        title: '共有 ' + totalPosts + ' 个搜索结果 关于：' + key,
       }}
     >
       <Card>
@@ -208,28 +199,13 @@ const Welcome: React.FC = () => {
               title={post.title}
               username={post.username}
               like={post.likes}
+              searchKey={key}
             />
           ))}
-        </div>
-        <div
-          style={{
-            marginTop: '24px',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
-          <Pagination
-            showQuickJumper
-            current={pageNumber}
-            total={totalPosts}
-            pageSize={pageSize}
-            onChange={onChange}
-            showSizeChanger={false}
-          />
         </div>
       </Card>
     </PageContainer>
   );
 };
 
-export default Welcome;
+export default SearchPage;
