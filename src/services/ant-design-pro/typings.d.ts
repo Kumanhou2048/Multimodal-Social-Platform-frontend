@@ -167,4 +167,22 @@ declare namespace API {
   type MakeAComment = {
     status: string;
   };
+
+  type HomePageIndex = {
+    index: number;
+  };
+
+  type SearchKey = {
+    key: any;
+  };
+
+  type PostID = {
+    id: any;
+  };
+
+  type Comment = {
+    userId: any;
+    postId: any;
+    content: string;
+  };
 }

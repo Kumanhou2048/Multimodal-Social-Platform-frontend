@@ -37,11 +37,10 @@ const PostDetail: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [posts, pictures, comments] = await Promise.all([
-        getPostDetail(id),
-        getPostPicture(id),
-        getPostComment(id),
-      ]);
+      const postid = (): API.PostID => ({ id: id });
+      const posts = await getPostDetail(postid());
+      const pictures = await getPostPicture(postid());
+      const comments = await getPostComment(postid());
 
       setPosts(posts);
       setPictures(pictures.pictures || []);
@@ -58,7 +57,12 @@ const PostDetail: React.FC = () => {
       return;
     }
     try {
-      const [status] = await Promise.all([makeAComment(currentUser?.id, id, textBoxContent)]);
+      const comment = (): API.Comment => ({
+        userId: currentUser?.id,
+        postId: id,
+        content: textBoxContent,
+      });
+      const status = await makeAComment(comment());
       if (status.status === 'success') {
         message.success('发布成功！');
       } else {

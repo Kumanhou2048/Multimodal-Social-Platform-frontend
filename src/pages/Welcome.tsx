@@ -140,43 +140,38 @@ const Welcome: React.FC = () => {
   const [totalPosts, setTotalPosts] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const pageSize = 12;
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [postsResult, totalPostsResult] = await Promise.all([
-          getHomePagePost(pageNumber),
-          getTotalPosts(),
-        ]);
+        const getHomePageIndex = (): API.HomePageIndex => ({ index: pageNumber });
+        const postsResult = await getHomePagePost(getHomePageIndex());
+        const totalPostsResult = await getTotalPosts();
 
         setPosts(postsResult.posts || []);
         setTotalPosts(totalPostsResult.total);
-
-        const totalPages = Math.ceil(totalPostsResult.total / pageSize);
-        if (pageNumber > totalPages) {
-          setPageNumber(totalPages);
-        }
       } catch (error) {
         console.error('获取数据失败', error);
       }
     };
 
     fetchData();
-  }, [pageNumber, totalPosts]);
+  }, [pageNumber]);
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const pageFromUrl = parseInt(urlParams.get('page') || '1', 10);
-    const totalPages = Math.ceil(totalPosts / pageSize);
-
-    let page = pageFromUrl;
-    if (pageFromUrl > totalPages) {
-      page = totalPages;
-    } else if (pageFromUrl < 1) {
-      page = 1;
-    }
-
-    setPageNumber(page);
-  }, [totalPosts]);
+  // useEffect(() => {
+  //   const urlParams = new URLSearchParams(window.location.search);
+  //   const pageFromUrl = parseInt(urlParams.get('page') || '1', 10);
+  //   const totalPages = Math.ceil(totalPosts / pageSize);
+  //
+  //   let page = pageFromUrl;
+  //   if (pageFromUrl > totalPages) {
+  //     page = totalPages;
+  //   } else if (pageFromUrl < 1) {
+  //     page = 1;
+  //   }
+  //
+  //   setPageNumber(page);
+  // }, [totalPosts]);
 
   const onChange: PaginationProps['onChange'] = (page) => {
     setPageNumber(page);

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 export default {
   /*首页获取帖子ID、标题。图片/视频的略缩图，用户名、用户头像和点赞数*/
-  'GET /api/getHomePagePost': (req: Request, res: Response) => {
+  'POST /api/getHomePagePost': (req: Request, res: Response) => {
     res.send({
       posts: [
         {

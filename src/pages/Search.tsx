@@ -160,12 +160,11 @@ const SearchPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [postsResult, totalPostsResult] = await Promise.all([
-          getSearchPagePost({ key: key }),
-          getTotalSearchPosts({ key: key }),
-        ]);
+        const searchKey = (): API.SearchKey => ({ key: key });
+        const postsResult = await getSearchPagePost(searchKey());
+        const totalPostsResult = await getTotalSearchPosts(searchKey());
 
-        setPosts(postsResult.posts);
+        setPosts(postsResult.posts || []);
         setTotalPosts(totalPostsResult.total);
       } catch (error) {
         console.error('获取数据失败', error);
@@ -173,7 +172,7 @@ const SearchPage: React.FC = () => {
     };
 
     fetchData();
-  }, [totalPosts]);
+  }, [key]);
 
   return (
     <PageContainer

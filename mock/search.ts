@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 export default {
-  'GET /api/getSearchPagePost': (req: Request, res: Response) => {
+  'POST /api/getSearchPagePost': (req: Request, res: Response) => {
     res.send({
       posts: [
         {
@@ -57,7 +57,7 @@ export default {
     });
   },
   /*首页获取帖子*/
-  'GET /api/getTotalSearchPosts': (req: Request, res: Response) => {
+  'POST /api/getTotalSearchPosts': (req: Request, res: Response) => {
     res.send({
       total: '20',
     });

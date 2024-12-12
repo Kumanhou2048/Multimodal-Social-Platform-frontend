@@ -128,15 +128,19 @@ export async function removeRule(options?: { [key: string]: any }) {
 }
 
 //获取首页帖子的信息 输入参数一个数字index 返回按时间排序 index*12-12 ~ index * 12的帖子
-/** 获取首页帖子的信息 GET /api/getHomePagePost */
-export async function getHomePagePost(index: number) {
+/** 获取首页帖子的信息 POST /api/getHomePagePost */
+export async function getHomePagePost(body: API.HomePageIndex, options?: { [key: string]: any }) {
   return request<API.HomePagePost>('/api/getHomePagePost', {
-    method: 'GET',
-    params: { index },
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
   });
 }
 //获取所有帖子的数量
-/** 获取所有帖子的数量 GET /api/getTotalPosts */
+/** 获取所有帖子的数量 POST /api/getTotalPosts */
 export async function getTotalPosts() {
   return request<API.TotalPosts>('/api/getTotalPosts', {
     method: 'GET',
@@ -157,57 +161,79 @@ export async function Likes(data: { userId: any; postId: string; newLikedState: 
 }
 
 //获取搜索页帖子的信息 输入参数string key 返回标题或者内容有key的帖子
-/** 获取首页帖子的信息 GET /api/getSearchPagePost */
-export async function getSearchPagePost(key: any) {
+/** 获取首页帖子的信息 POST /api/getSearchPagePost */
+export async function getSearchPagePost(body: API.SearchKey, options?: { [key: string]: any }) {
   return request<API.SearchPagePost>('/api/getSearchPagePost', {
-    method: 'GET',
-    key: key,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
   });
 }
 
 //获取符合搜索帖子的数量
-/** 获取所有帖子的数量 GET /api/getTotalSearchPosts */
-export async function getTotalSearchPosts(key: any) {
+/** 获取所有帖子的数量 POST /api/getTotalSearchPosts */
+export async function getTotalSearchPosts(body: API.SearchKey, options?: { [key: string]: any }) {
   return request<API.TotalSearchPosts>('/api/getTotalSearchPosts', {
-    method: 'GET',
-    key: key,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
   });
 }
 
 //根据帖子ID返回帖子的详细信息
-/** 获取帖子的详细信息 GET /api/getPostDetail */
-export async function getPostDetail(postId: any) {
+/** 获取帖子的详细信息 POST /api/getPostDetail */
+export async function getPostDetail(body: API.PostID, options?: { [key: string]: any }) {
   return request<API.PostDetails>('/api/getPostDetail', {
-    method: 'GET',
-    postId: postId,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
   });
 }
 
 //根据帖子ID返回该帖子的全部图片
-/** 获取帖子的全部图片 GET /api/getPostPicture*/
-export async function getPostPicture(postId: any) {
+/** 获取帖子的全部图片 POST /api/getPostPicture*/
+export async function getPostPicture(body: API.PostID, options?: { [key: string]: any }) {
   return request<API.PostPicture>('/api/getPostPicture', {
-    method: 'GET',
-    postId: postId,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
   });
 }
 
 //根据帖子ID返回该帖子的评论
-/** 获取帖子的全部图片 GET /api/getPostComment*/
-export async function getPostComment(postId: any) {
+/** 获取帖子的全部图片 POST /api/getPostComment*/
+export async function getPostComment(body: API.PostID, options?: { [key: string]: any }) {
   return request<API.PostComment>('/api/getPostComment', {
-    method: 'GET',
-    postId: postId,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
   });
 }
 
 //发表评论
 /** 发表评论 POST /api/makeAComment*/
-export async function makeAComment(userId: any, postId: any, content: string) {
+export async function makeAComment(body: API.Comment, options?: { [key: string]: any }) {
   return request<API.MakeAComment>('/api/makeAComment', {
     method: 'POST',
-    userId: userId,
-    postId: postId,
-    content: content,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
   });
 }

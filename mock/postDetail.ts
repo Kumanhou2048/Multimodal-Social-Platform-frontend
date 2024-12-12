@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 
 export default {
-  'GET /api/getPostDetail': (req: Request, res: Response) => {
+  'POST /api/getPostDetail': (req: Request, res: Response) => {
     res.send({
       posterAvatarUrl: '/Avatar/Kuman.png',
       posterName: 'Kuman',
@@ -19,7 +19,7 @@ export default {
         '　　客喜而笑，洗盏更酌。肴核既尽，杯盘狼籍。相与枕藉乎舟中，不知东方之既白。',
     });
   },
-  'GET /api/getPostPicture': (req: Request, res: Response) => {
+  'POST /api/getPostPicture': (req: Request, res: Response) => {
     res.send({
       pictures: [
         {
@@ -37,7 +37,7 @@ export default {
       ],
     });
   },
-  'GET /api/getPostComment': (req: Request, res: Response) => {
+  'POST /api/getPostComment': (req: Request, res: Response) => {
     res.send({
       comments: [
         {
