@@ -1,9 +1,9 @@
 import { outLogin } from '@/services/ant-design-pro/api';
 import { LogoutOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
-//import type { GetProps } from 'antd';
 import { Input, message, Spin } from 'antd';
 import { createStyles } from 'antd-style';
+import { now } from 'lodash';
 import { stringify } from 'querystring';
 import type { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback } from 'react';
@@ -136,7 +136,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
       return;
     }
     const urlParams = new URL(window.location.href).searchParams;
-    history.push(urlParams.get('redirect') || '/search/' + value);
+    history.push(urlParams.get('redirect') || '/search/' + value + '/' + now());
   };
 
   return (

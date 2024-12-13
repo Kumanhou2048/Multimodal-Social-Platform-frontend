@@ -44,17 +44,20 @@ export default {
           avatarUrl: '/Avatar/Kuman.png',
           name: 'Kuman',
           content: '哈哈哈哈6666123',
+          time: '2024-1-1',
         },
         {
           avatarUrl: '/Avatar/Kuman.png',
           name: 'cyw',
           content:
             '山不在高，有仙则名。水不在深，有龙则灵。斯是陋室，惟吾德馨。苔痕上阶绿，草色入帘青。谈笑有鸿儒，往来无白丁。可以调素琴，阅金经。无丝竹之乱耳，无案牍之劳形。南阳诸葛庐，西蜀子云亭。孔子云：何陋之有？',
+          time: '2024-1-1',
         },
         {
           avatarUrl: '/Avatar/Kuman.png',
           name: 'czl',
           content: 'The quick brown fox jumps over the lazy dog',
+          time: '2024-1-1',
         },
         {
           avatarUrl: '/Avatar/Kuman.png',
@@ -73,6 +76,7 @@ export default {
             '第九天，从商店 2 购买物品 0 ，开销为 values[2][0] * 9 = 81 。\n' +
             '所以总开销为 285 。\n' +
             '285 是购买所有 m * n 件物品的最大总开销。',
+          time: '2024-1-1',
         },
       ],
     });

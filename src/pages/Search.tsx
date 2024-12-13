@@ -154,6 +154,7 @@ const Post: React.FC<{
 
 const SearchPage: React.FC = () => {
   const { key } = useParams<{ key: string }>();
+  const { time } = useParams<{ time: string }>();
   const [posts, setPosts] = useState<any[]>([]);
   const [totalPosts, setTotalPosts] = useState<number>(0);
 
@@ -164,15 +165,23 @@ const SearchPage: React.FC = () => {
         const postsResult = await getSearchPagePost(searchKey());
         const totalPostsResult = await getTotalSearchPosts(searchKey());
 
-        setPosts(postsResult.posts || []);
-        setTotalPosts(totalPostsResult.total);
+        let post: any[] = [];
+        let total: any;
+        if (Array.isArray(postsResult)) {
+          postsResult.forEach((item) => {
+            post.push(item);
+          });
+        }
+        total = totalPostsResult;
+        setPosts(post || []);
+        setTotalPosts(total);
       } catch (error) {
         console.error('获取数据失败', error);
       }
     };
 
     fetchData();
-  }, [key]);
+  }, [key, time]);
 
   return (
     <PageContainer

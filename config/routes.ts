@@ -10,7 +10,7 @@ export default [
   },
   { path: '/welcome', name: '首页', icon: 'smile', component: './Welcome' },
   { path: '/publish', name: '发布', icon: 'PlusOutlined', component: './Welcome' },
-  { path: '/search/:key', name: '搜索页', component: './Search', hideInMenu: true },
+  { path: '/search/:key/:time', name: '搜索页', component: './Search', hideInMenu: true },
   { path: '/post/:id', name: '帖子详情', component: './Post', hideInMenu: true },
   // 设置用户信息（提取出来作为一级页面）
   {

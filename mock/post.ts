@@ -130,7 +130,7 @@ export default {
   /*首页获取帖子*/
   'GET /api/getTotalPosts': (req: Request, res: Response) => {
     res.send({
-      total: '100',
+      total: '13',
     });
   },
   'PATCH /api/Likes': (req: Request, res: Response) => {

@@ -147,9 +147,16 @@ const Welcome: React.FC = () => {
         const getHomePageIndex = (): API.HomePageIndex => ({ index: pageNumber });
         const postsResult = await getHomePagePost(getHomePageIndex());
         const totalPostsResult = await getTotalPosts();
-
-        setPosts(postsResult.posts || []);
-        setTotalPosts(totalPostsResult.total);
+        let post: any[] = [];
+        let total: any;
+        if (Array.isArray(postsResult)) {
+          postsResult.forEach((item) => {
+            post.push(item);
+          });
+        }
+        total = totalPostsResult;
+        setPosts(post || []);
+        setTotalPosts(total);
       } catch (error) {
         console.error('获取数据失败', error);
       }

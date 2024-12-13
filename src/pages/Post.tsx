@@ -42,9 +42,24 @@ const PostDetail: React.FC = () => {
       const pictures = await getPostPicture(postid());
       const comments = await getPostComment(postid());
 
-      setPosts(posts);
-      setPictures(pictures.pictures || []);
-      setComments(comments.comments || []);
+      let post: Post;
+      let picture: any = [];
+      let comment: any = [];
+      post = posts;
+      if (Array.isArray(pictures)) {
+        pictures.forEach((item) => {
+          picture.push(item);
+        });
+      }
+      if (Array.isArray(comments)) {
+        comments.forEach((item) => {
+          comment.push(item);
+        });
+      }
+
+      setPosts(post);
+      setPictures(picture || []);
+      setComments(comment || []);
     } catch (error) {
       console.error('获取数据失败', error);
     }
