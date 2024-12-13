@@ -131,7 +131,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
 
   //处理搜索事件
   const onSearch = (value: string) => {
-    if (value === '') {
+    if (value.trim() === '') {
       message.error('请输入要搜索的内容！');
       return;
     }

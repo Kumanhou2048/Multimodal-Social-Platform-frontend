@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 export default {
   'POST /api/getPostDetail': (req: Request, res: Response) => {
     res.send({
-      posterAvatarUrl: '/Avatar/Kuman.png',
+      posterAvatarUrl: '/avatar/Kuman.png',
       posterName: 'Kuman',
       postTime: '2024-1-1',
       postTitle: '赤壁赋——苏轼',
@@ -41,26 +41,26 @@ export default {
     res.send({
       comments: [
         {
-          avatarUrl: '/Avatar/Kuman.png',
+          avatarUrl: '/avatar/Kuman.png',
           name: 'Kuman',
           content: '哈哈哈哈6666123',
           time: '2024-1-1',
         },
         {
-          avatarUrl: '/Avatar/Kuman.png',
+          avatarUrl: '/avatar/Kuman.png',
           name: 'cyw',
           content:
             '山不在高，有仙则名。水不在深，有龙则灵。斯是陋室，惟吾德馨。苔痕上阶绿，草色入帘青。谈笑有鸿儒，往来无白丁。可以调素琴，阅金经。无丝竹之乱耳，无案牍之劳形。南阳诸葛庐，西蜀子云亭。孔子云：何陋之有？',
           time: '2024-1-1',
         },
         {
-          avatarUrl: '/Avatar/Kuman.png',
+          avatarUrl: '/avatar/Kuman.png',
           name: 'czl',
           content: 'The quick brown fox jumps over the lazy dog',
           time: '2024-1-1',
         },
         {
-          avatarUrl: '/Avatar/Kuman.png',
+          avatarUrl: '/avatar/Kuman.png',
           name: 'hwy',
           content:
             '输入：values = [[8,5,2],[6,4,1],[9,7,3]]\n' +

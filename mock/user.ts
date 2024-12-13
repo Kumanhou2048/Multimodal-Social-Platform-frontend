@@ -39,7 +39,7 @@ export default {
     }
     res.send({
       username: 'Kuman',
-      avatarUrl: '/Avatar/Kuman.png',
+      avatarUrl: '/avatar/Kuman.png',
       id: '22331023',
       //1 管理员 other 普通用户 详细看scr/access.ts
       userRole: 1,

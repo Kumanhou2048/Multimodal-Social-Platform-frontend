@@ -67,7 +67,7 @@ const PostDetail: React.FC = () => {
 
   // 提交评论时刷新评论
   const handleCommentSubmit = async () => {
-    if (textBoxContent === '') {
+    if (textBoxContent.trim() === '') {
       message.error('请先输入内容！');
       return;
     }
@@ -82,6 +82,7 @@ const PostDetail: React.FC = () => {
         message.success('发布成功！');
       } else {
         message.error('发布失败！');
+        return;
       }
     } catch (error) {
       console.error('发表评论失败', error);
@@ -108,7 +109,7 @@ const PostDetail: React.FC = () => {
           {pictures.map((picture, index) => (
             <div key={index}>
               <p style={contentStyle}>
-                <Image height={550} src={picture.url} fallback="/Note/error.png" />
+                <Image height={550} src={picture} fallback="/Note/error.png" />
               </p>
             </div>
           ))}
