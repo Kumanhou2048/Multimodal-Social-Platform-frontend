@@ -171,7 +171,7 @@ const App: React.FC = () => {
             onChange={handleChange}
             accept=".png,.jpeg,.jpg"
           >
-            {fileList.length >= 10 ? null : uploadButton}
+            {fileList.length >= 5 ? null : uploadButton}
           </Upload>
           {previewImage && (
             <Image

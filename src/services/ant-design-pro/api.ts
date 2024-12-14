@@ -177,19 +177,6 @@ export async function getTotalPosts() {
   });
 }
 
-//获取该用户所有帖子的数量
-/** 获取该用户所有帖子的数量 POST /api/getTotalPosts */
-export async function getUserTotalPosts(body: API.getUserTotalPostsParams, options?: { [key: string]: any }) {
-  return request<API.TotalPosts>('/api/update', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: body,
-    ...(options || {}),
-  });
-}
-
 //给某个帖子点赞 输入点赞者id 点赞的帖子id 一个布尔值 true代表点赞 false代表取消点赞
 /** 给某个帖子点赞 PATCH /api/Likes **/
 export async function Likes(data: { userId: any; postId: string; newLikedState: boolean }) {

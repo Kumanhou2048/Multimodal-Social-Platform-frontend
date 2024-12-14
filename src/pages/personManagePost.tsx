@@ -1,9 +1,9 @@
-import {deleteNote, getUserPost, getUserTotalPosts, Likes} from '@/services/ant-design-pro/api';
+import {deleteNote, getUserPost, Likes} from '@/services/ant-design-pro/api';
 import { history } from '@@/core/history';
 import { LikeFilled, LikeOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
-import {Avatar, Button, Card, message, Modal, Pagination, PaginationProps, Space} from 'antd';
+import {Avatar, Button, Card, message, Modal, Space} from 'antd';
 import React, { useEffect, useState } from 'react';
 
 const { Meta } = Card;
@@ -174,42 +174,32 @@ const Post: React.FC<{
 
 const PersonManagePost: React.FC = () => {
   const [posts, setPosts] = useState<any[]>([]);
-  const [totalPosts, setTotalPosts] = useState<number>(0);
-  const [pageNumber, setPageNumber] = useState<number>(1);
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
-  const pageSize = 12;
+  let userAccount=currentUser?.userAccount;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const getHomePageIndex = (): API.HomePageIndex => ({ index: pageNumber });
         // 定义参数时附加 userAccount
         const params = {
-          ...getHomePageIndex(), // 保留 index 参数
           userAccount: currentUser?.userAccount, // 添加 userAccount 参数
         };
         const postsResult = await getUserPost(params);
-        const totalPostsResult = await getUserTotalPosts({
-          userAccount: currentUser?.userAccount,
-        });
         let post: any[] = [];
-        let total: any;
         if (Array.isArray(postsResult)) {
           postsResult.forEach((item) => {
             post.push(item);
           });
         }
-        total = totalPostsResult;
         setPosts(post || []);
-        setTotalPosts(total);
       } catch (error) {
         console.error('获取数据失败', error);
       }
     };
 
     fetchData();
-  }, [pageNumber]);
+  },[userAccount]);
 
   // useEffect(() => {
   //   const urlParams = new URLSearchParams(window.location.search);
@@ -225,12 +215,6 @@ const PersonManagePost: React.FC = () => {
   //
   //   setPageNumber(page);
   // }, [totalPosts]);
-
-  const onChange: PaginationProps['onChange'] = (page) => {
-    setPageNumber(page);
-    window.scrollTo(0, 0);
-    window.history.pushState({}, '', `?page=${page}`);
-  };
 
   return (
     <PageContainer
@@ -291,22 +275,6 @@ const PersonManagePost: React.FC = () => {
               like={post.likes}
             />
           ))}
-        </div>
-        <div
-          style={{
-            marginTop: '24px',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
-          <Pagination
-            showQuickJumper
-            current={pageNumber}
-            total={totalPosts}
-            pageSize={pageSize}
-            onChange={onChange}
-            showSizeChanger={false}
-          />
         </div>
       </Card>
     </PageContainer>
