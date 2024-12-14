@@ -14,10 +14,14 @@ export default [
   { path: '/post/:id', name: '帖子详情', component: './Post', hideInMenu: true },
   // 设置用户信息（提取出来作为一级页面）
   {
-    path: '/personInfoSetting',
+    path: '/personSetting',
     name: '个人设置',
     icon: 'SettingOutlined',
-    component: './personInfoSetting',
+    routes: [
+      { path: '/personSetting', redirect: '/personInfoSetting/infoSetting' },
+      { path: '/personSetting/infoSetting', name: '个人信息管理页', component: './personInfoSetting' },
+      { path: '/personSetting/managePost', name: '帖子管理', component: './personManagePost' }
+    ]
   },
   {
     path: '/admin',

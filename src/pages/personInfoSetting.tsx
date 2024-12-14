@@ -81,7 +81,7 @@ export default () => {
   return (
     <PageContainer
       header={{
-        title: '个人信息设置',
+        title: '',
         style: {
           textAlign: 'left',
           margin: '20px 0 0 20px',
@@ -108,7 +108,7 @@ export default () => {
             listType="picture-circle"
             className="avatar-uploader"
             showUploadList={false}
-            action="/api/upload"
+            action="/api/uploadAvatar"
             beforeUpload={beforeUpload}
             onChange={handleChange}
             data={{ userAccount: currentUser?.userAccount }} // 添加额外的请求参数

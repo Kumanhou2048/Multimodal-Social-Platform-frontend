@@ -1,12 +1,18 @@
+import React, { useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
-//import { useModel } from '@umijs/max';
-import type { GetProp, UploadFile, UploadProps } from 'antd';
 import { Button, Card, Image, Input, message, Upload } from 'antd';
-import React, { useState } from 'react';
+import type { UploadFile, UploadProps } from 'antd';
+import {useModel} from "@@/exports";
+import {upLoadNote} from "@/services/ant-design-pro/api";
 
-type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
+type ImageUploadResult = {
+  url: string;
+  error:string
+};
 
+// @ts-ignore
+type FileType = Parameters<UploadProps['beforeUpload']>[0];
 const { TextArea } = Input;
 
 const getBase64 = (file: FileType): Promise<string> =>
@@ -21,68 +27,25 @@ const App: React.FC = () => {
   // 笔记数据部分
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  // const [imagecount, setimageCount] = useState(0);
-  let imageCount = 0;
-  // const [keyword, setKeyword] = useState('');
-
-  // 用户信息部分
-  // const { initialState } = useModel('@@initialState');
-  // const { currentUser } = initialState || {};
-  // userId: currentUser?.id;
+  const [imageCount, setImageCount] = useState(0); // 将 imageCount 改为状态变量
 
   // 图片显示部分
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
-  const [fileList, setFileList] = useState<UploadFile[]>([
-    // {
-    //   uid: '-1',
-    //   name: 'image.png',
-    //   status: 'done',
-    //   url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-    // },
-    // {
-    //   uid: '-2',
-    //   name: 'image.png',
-    //   status: 'done',
-    //   url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-    // },
-    // {
-    //   uid: '-3',
-    //   name: 'image.png',
-    //   status: 'done',
-    //   url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-    // },
-    // {
-    //   uid: '-4',
-    //   name: 'image.png',
-    //   status: 'done',
-    //   url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-    // },
-    // {
-    //   uid: '-xxx',
-    //   percent: 50,
-    //   name: 'image.png',
-    //   status: 'uploading',
-    //   url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-    // },
-    // {
-    //   uid: '-5',
-    //   name: 'image.png',
-    //   status: 'error',
-    // },
-  ]);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  //用户信息
+  const { initialState } = useModel('@@initialState');
+  const { currentUser } = initialState || {};
 
   const handlePreview = async (file: UploadFile) => {
     if (!file.url && !file.preview) {
       file.preview = await getBase64(file.originFileObj as FileType);
     }
-
     setPreviewImage(file.url || (file.preview as string));
     setPreviewOpen(true);
   };
 
   const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
-    //将文件类型限制为PNG、JPG和JPEG
     const validFileList = newFileList.filter((file) => {
       const isPNG = file.type === 'image/png';
       const isJPEG = file.type === 'image/jpeg';
@@ -92,32 +55,49 @@ const App: React.FC = () => {
       }
       return true;
     });
+
     setFileList(validFileList);
+    setImageCount(validFileList.length); // 更新图片数量的状态
   };
 
-  // setimageCount(fileList.length);
-  imageCount = fileList.length; // 更新图片数量
-
-  // // 使用 useEffect 记录数据变化
-  // useEffect(() => {
-  //   console.log('标题:', title);
-  // }, [title]); // 依赖于 title，每当 title 变化时执行
-  //
-  // useEffect(() => {
-  //   console.log('内容:', content);
-  // }, [content]); // 依赖于 content，每当 content 变化时执行
-  //
-  // useEffect(() => {
-  //   console.log('话题:', keyword);
-  // }, [keyword]); // 依赖于 keyword，每当 keyword 变化时执行
+  // 新增函数，用于将单张图片发送到后端并获取返回的URL
+  // @ts-ignore
+  const uploadImageToBackend = async (file: FileType): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const requestOptions = {
+      method: 'POST',
+      body: formData,
+    };
+    const request = new Request('/api/uploadImage', requestOptions);
+    try {
+      const response = await fetch(request);
+      if (response.ok) {
+        try {
+          const result: ImageUploadResult = await response.json();
+          return result.url;
+        } catch (error) {
+          // 其他错误处理逻辑不变
+          console.error("解析失败");
+        }
+      } else {
+        console.log("图片上传失败");
+        throw new Error('图片上传失败');
+      }
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
 
   // 检测数据获取
-  const submitData = () => {
-    console.log('标题:', title);
-    console.log('内容:', content);
+  const submitData = async () => {
     console.log('图片数量:', imageCount);
+    console.log('图片列表:', fileList);
+    console.log('标题内容:', title);
+    console.log('文字内容:', content);
     if (imageCount === 0) {
-      message.error('请上转图片！');
+      message.error('请上传图片！');
       return;
     }
     if (title.trim() === '') {
@@ -128,6 +108,44 @@ const App: React.FC = () => {
       message.error('请输入笔记内容！');
       return;
     }
+    //上传数据
+    // 遍历图片列表，上传图片并获取URL，存入新的列表
+    const imageUrls: string[] = [];
+    for (const file of fileList) {
+      await new Promise((resolve) => {setTimeout(resolve, 100)}); // 延迟 100 毫秒，可根据实际调整
+      const url = await uploadImageToBackend(file.originFileObj as FileType);
+      imageUrls.push(url);
+    }
+    const uplaodNoteParams={
+      userAccount: currentUser?.userAccount,
+      title: title,
+      content: content,
+      noteType: 0,
+      imageCount: imageCount,
+      imageUrls: imageUrls,
+    }
+    const result=await upLoadNote(uplaodNoteParams);
+    if(result>0){
+      message.success("上传笔记成功");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000); // 这里设置延迟1秒后刷新页面，时间可根据实际情况调整
+    }
+    else if(result===-1){
+      console.log("请求为空！");
+    }
+    else if(result===-2){
+      message.error("标题不能为空");
+    }
+    else if(result===-3){
+      message.error("标题长度超过50");
+    }
+    else if(result===-4){
+      message.error("内容长度超过500！");
+    }
+    else if(result===-5){
+      console.log("后端保存失败");
+    }
   };
 
   const uploadButton = (
@@ -136,7 +154,7 @@ const App: React.FC = () => {
       <div style={{ marginTop: 8 }}>Upload</div>
     </button>
   );
-  console.log(fileList[fileList.length - 1]);
+
   return (
     <>
       <PageContainer
@@ -146,7 +164,7 @@ const App: React.FC = () => {
       >
         <Card>
           <Upload
-            action="8080/api/uploadNote"
+            // action="8080/api/uploadNote"
             listType="picture-card"
             fileList={fileList}
             onPreview={handlePreview}
@@ -180,7 +198,7 @@ const App: React.FC = () => {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="请输入笔记标题"
             autoSize
-            maxLength={50} // 限制最大输入长度为50字
+            maxLength={50}
           />
           <p
             style={{
@@ -190,8 +208,7 @@ const App: React.FC = () => {
             }}
           >
             当前字数：{title.length} / 50
-          </p>{' '}
-          {/* 动态显示当前字数及最大字符数 */}
+          </p>
           <div style={{ margin: '15px 0' }} />
           <h2
             style={{
@@ -205,7 +222,7 @@ const App: React.FC = () => {
             onChange={(e) => setContent(e.target.value)}
             placeholder="请输入笔记内容"
             autoSize={{ minRows: 3, maxRows: 5 }}
-            maxLength={500} // 限制最大输入长度为500字
+            maxLength={500}
           />
           <p
             style={{
@@ -215,15 +232,7 @@ const App: React.FC = () => {
             }}
           >
             当前字数：{content.length} / 500
-          </p>{' '}
-          {/* 动态显示当前字数及最大字符数 */}
-          <div style={{ margin: '15px 0' }} />
-          {/*<h2>笔记话题：</h2>*/}
-          {/*<TextArea*/}
-          {/*  value={keyword}*/}
-          {/*  onChange={(e) => setKeyword(e.target.value)}*/}
-          {/*  placeholder="请输入笔记话题" autoSize={{minRows: 2, maxRows: 6}}/>*/}
-          <br />
+          </p>
           <div style={{ margin: '15px 0' }} />
           <Button type="primary" onClick={submitData}>
             上传笔记

@@ -54,7 +54,7 @@ export async function reset(body: API.ResetParams, options?: { [key: string]: an
   });
 }
 
-/** 注册接口 POST /api/register/account */
+/** 个人信息更新接口 POST /api/register/account */
 export async function update(body: API.updateParams, options?: { [key: string]: any }) {
   return request<API.UpdateResult>('/api/update', {
     method: 'POST',
@@ -66,10 +66,26 @@ export async function update(body: API.updateParams, options?: { [key: string]: 
   });
 }
 
-/** 此处后端没有提供注释 GET /api/notices */
-export async function getNotices(options?: { [key: string]: any }) {
-  return request<API.NoticeIconList>('/api/notices', {
-    method: 'GET',
+/** 删除帖子接口 POST /api/register/account */
+export async function deleteNote(body: API.deleteNoteParams, options?: { [key: string]: any }) {
+  return request<API.DeleteNoteResult>('/api/deleteNote', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
+/** 上上传笔记接口 POST /api/register/account */
+export async function upLoadNote(body: API.upLoadNoteParams, options?: { [key: string]: any }) {
+  return request<API.UpLoadNoteResult>('/api/uploadNote', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
     ...(options || {}),
   });
 }
@@ -139,11 +155,38 @@ export async function getHomePagePost(body: API.HomePageIndex, options?: { [key:
     ...(options || {}),
   });
 }
+
+//获取用户所有帖子的信息 输入参数一个数字index 返回按时间排序 index*12-12 ~ index * 12的帖子，和用户账号
+/** 获取用户所有的帖子的信息 POST /api/getHomePagePost */
+export async function getUserPost(body: API.getUserPostParams, options?: { [key: string]: any }) {
+  return request<API.HomePagePost>('/api/getUserPost', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
 //获取所有帖子的数量
 /** 获取所有帖子的数量 POST /api/getTotalPosts */
 export async function getTotalPosts() {
   return request<API.TotalPosts>('/api/getTotalPosts', {
     method: 'GET',
+  });
+}
+
+//获取该用户所有帖子的数量
+/** 获取该用户所有帖子的数量 POST /api/getTotalPosts */
+export async function getUserTotalPosts(body: API.getUserTotalPostsParams, options?: { [key: string]: any }) {
+  return request<API.TotalPosts>('/api/update', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
   });
 }
 
