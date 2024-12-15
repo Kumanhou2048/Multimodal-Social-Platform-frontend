@@ -1,7 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
 
-
 declare namespace API {
   type CurrentUser = {
     id: number;
@@ -83,9 +82,9 @@ declare namespace API {
     type?: string;
   };
 
-  type deleteNoteParams={
+  type deleteNoteParams = {
     id?: number;
-  }
+  };
 
   type upLoadNoteParams = {
     userAccount?: string;
@@ -94,12 +93,12 @@ declare namespace API {
     noteType?: number;
     imageCount?: number;
     imageUrl?: string[];
-  }
+  };
 
   type getUserTotalPostsParams = {
     userAccount?: string;
     type?: string;
-  }
+  };
 
   type newPersonInfoParams = {
     userAccount?: string;
@@ -177,6 +176,7 @@ declare namespace API {
     postTime: string;
     postTitle: string;
     postContent: string;
+    userAccount?: string;
   };
 
   type PostPicture = {
@@ -196,9 +196,8 @@ declare namespace API {
   };
 
   type getUserPostParams = {
-    index?: number;
     userAccount?: string;
-  }
+  };
 
   type SearchKey = {
     key: any;
@@ -212,5 +211,10 @@ declare namespace API {
     userId: any;
     postId: any;
     content: string;
+  };
+
+  type ManageUser = {
+    avatarUrl: string;
+    userName: string;
   };
 }

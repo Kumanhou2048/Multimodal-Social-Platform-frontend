@@ -1,12 +1,18 @@
-import {deleteNote, getUserPost, Likes} from '@/services/ant-design-pro/api';
+import { deleteNote, getManageUser, getUserPost, Likes } from '@/services/ant-design-pro/api';
 import { history } from '@@/core/history';
 import { LikeFilled, LikeOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
-import {Avatar, Button, Card, message, Modal, Space} from 'antd';
+import { Avatar, Button, Card, message, Modal, Space } from 'antd';
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'umi';
 
 const { Meta } = Card;
+
+interface ManageUser {
+  avatarUrl: string;
+  userName: string;
+}
 
 //点赞
 const LikeButton: React.FC<{
@@ -61,7 +67,9 @@ const Post: React.FC<{
   title: string;
   username: string;
   like: string;
-}> = ({ id, scr, avatar_scr, title, username, like }) => {
+  userAccount1: any;
+  userAccount2: any;
+}> = ({ id, scr, avatar_scr, title, username, like, userAccount1, userAccount2 }) => {
   const [likeCount, setLikeCount] = useState<number>(parseInt(like, 10));
 
   const handleClick = () => {
@@ -87,7 +95,7 @@ const Post: React.FC<{
           id: parseInt(id, 10),
         });
         if (result === 1) {
-          message.success("删除成功");
+          message.success('删除成功');
           setTimeout(() => {
             window.location.reload();
           }, 1000); // 这里设置延迟1秒后刷新页面，时间可根据实际情况调整
@@ -98,6 +106,25 @@ const Post: React.FC<{
       },
     });
   };
+
+  const handleAvatarClick = async (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    event.stopPropagation();
+    const urlParams = new URL(window.location.href).searchParams;
+    history.push(urlParams.get('redirect') || '/personSetting/managePost/' + userAccount2);
+  };
+
+  const deleteButton = (
+    <Button
+      type="primary"
+      style={{
+        color: 'white',
+        marginLeft: '10px',
+      }}
+      onClick={handleDeleteClick}
+    >
+      删除
+    </Button>
+  );
 
   return (
     <>
@@ -118,80 +145,86 @@ const Post: React.FC<{
         }
         onClick={handleClick}
       >
-        <Space direction="vertical" size="middle" style={{display: 'flex'}}>
-          <Meta title={title}/>
+        <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+          <Meta title={title} />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <div onClick={handleAvatarClick}>
+              <Avatar src={<img src={avatar_scr} alt="avatar" />} />
+            </div>
+            <p
+              style={{
+                fontSize: '13px',
+                margin: 0,
+                lineHeight: '14px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '100px', // 根据字体大小设置宽度限制
+              }}
+            >
+              {username}
+            </p>
             <div
               style={{
+                marginLeft: 'auto',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
               }}
             >
-              <Avatar src={<img src={avatar_scr} alt="avatar"/>}/>
+              <LikeButton postId={id} onLikeChange={handleLikeChange}></LikeButton>
               <p
                 style={{
-                  fontSize: '13px',
+                  fontSize: '12px',
                   margin: 0,
-                  lineHeight: '14px',
                 }}
               >
-                {username}
+                {likeCount}
               </p>
-              <div
-                style={{
-                  marginLeft: 'auto',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <LikeButton postId={id} onLikeChange={handleLikeChange}></LikeButton>
-                <p
-                  style={{
-                    fontSize: '12px',
-                    margin: 0,
-                  }}
-                >
-                  {likeCount}
-                </p>
-                {/* 添加删除按钮，设置按钮的类型、样式以及点击事件处理函数 */}
-                <Button
-                  type="primary"
-                  style={{
-                    color: 'white',
-                  }}
-                  onClick={handleDeleteClick}
-                >
-                  删除
-                </Button>
-              </div>
+              {/* 添加删除按钮，设置按钮的类型、样式以及点击事件处理函数 */}
+              {userAccount1 === userAccount2 ? deleteButton : null}
             </div>
+          </div>
         </Space>
       </Card>
     </>
-);
+  );
 };
 
 const PersonManagePost: React.FC = () => {
   const [posts, setPosts] = useState<any[]>([]);
+  const [user, setUser] = useState<ManageUser | null>(null);
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
-  let userAccount=currentUser?.userAccount;
-
+  let userAccount = currentUser?.userAccount;
+  let { account } = useParams<{ account: string }>();
+  if (account === ':account') {
+    account = currentUser?.userAccount;
+  }
   useEffect(() => {
     const fetchData = async () => {
       try {
         // 定义参数时附加 userAccount
         const params = {
-          userAccount: currentUser?.userAccount, // 添加 userAccount 参数
+          userAccount: account, // 添加 userAccount 参数
         };
         const postsResult = await getUserPost(params);
+        const userResult = await getManageUser(params);
         let post: any[] = [];
+        let user: ManageUser;
+        user = userResult;
         if (Array.isArray(postsResult)) {
           postsResult.forEach((item) => {
             post.push(item);
           });
         }
+        setUser(user || []);
         setPosts(post || []);
       } catch (error) {
         console.error('获取数据失败', error);
@@ -199,7 +232,7 @@ const PersonManagePost: React.FC = () => {
     };
 
     fetchData();
-  },[userAccount]);
+  }, [userAccount]);
 
   // useEffect(() => {
   //   const urlParams = new URLSearchParams(window.location.search);
@@ -240,17 +273,17 @@ const PersonManagePost: React.FC = () => {
             alignItems: 'center', // 头像和文字垂直居中
           }}
         >
-          <Avatar src={currentUser?.avatarUrl} size={70} />
+          <Avatar src={user?.avatarUrl} size={70} />
           <div
             style={{
               marginLeft: 16, // 调整头像与文字的间距
             }}
           >
             <p style={{ margin: 0, fontWeight: 'bold', fontSize: '25px' }}>
-              {currentUser?.username || '用户名'}
+              {user?.userName || '用户名'}
             </p>
             <p style={{ margin: 0, fontSize: '17px', color: '#555' }}>
-              小蓝书号：{currentUser?.userAccount || '未知'}
+              小蓝书号：{account || '未知'}
             </p>
           </div>
         </div>
@@ -273,6 +306,8 @@ const PersonManagePost: React.FC = () => {
               title={post.title}
               username={post.username}
               like={post.likes}
+              userAccount1={userAccount}
+              userAccount2={account}
             />
           ))}
         </div>

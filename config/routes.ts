@@ -19,9 +19,17 @@ export default [
     icon: 'SettingOutlined',
     routes: [
       { path: '/personSetting', redirect: '/personInfoSetting/infoSetting' },
-      { path: '/personSetting/infoSetting', name: '个人信息管理页', component: './personInfoSetting' },
-      { path: '/personSetting/managePost', name: '帖子管理', component: './personManagePost' }
-    ]
+      {
+        path: '/personSetting/infoSetting',
+        name: '个人信息管理页',
+        component: './personInfoSetting',
+      },
+      {
+        path: '/personSetting/managePost/:account',
+        name: '帖子管理',
+        component: './personManagePost',
+      },
+    ],
   },
   {
     path: '/admin',

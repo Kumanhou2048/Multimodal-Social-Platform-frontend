@@ -267,3 +267,16 @@ export async function makeAComment(body: API.Comment, options?: { [key: string]:
     ...(options || {}),
   });
 }
+
+//管理页获取用户信息
+/** 发表评论 POST /api/getManageUser*/
+export async function getManageUser(body: API.getUserPostParams, options?: { [key: string]: any }) {
+  return request<API.ManageUser>('/api/getManageUser', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  });
+}

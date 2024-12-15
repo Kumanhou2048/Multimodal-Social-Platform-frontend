@@ -61,7 +61,8 @@ const Post: React.FC<{
   title: string;
   username: string;
   like: string;
-}> = ({ id, scr, avatar_scr, title, username, like }) => {
+  userAccount?: string;
+}> = ({ id, scr, avatar_scr, title, username, like, userAccount }) => {
   const [likeCount, setLikeCount] = useState<number>(parseInt(like, 10));
 
   const handleClick = () => {
@@ -72,6 +73,13 @@ const Post: React.FC<{
   const handleLikeChange = (newLikeState: boolean) => {
     setLikeCount(newLikeState ? likeCount + 1 : likeCount - 1); // 根据点赞状态更新数量
   };
+
+  const handleAvatarClick = async (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    event.stopPropagation();
+    const urlParams = new URL(window.location.href).searchParams;
+    history.push(urlParams.get('redirect') || '/personSetting/managePost/' + userAccount);
+  };
+
   return (
     <>
       <Card
@@ -100,7 +108,9 @@ const Post: React.FC<{
               gap: '8px',
             }}
           >
-            <Avatar src={<img src={avatar_scr} alt="avatar" />} />
+            <div onClick={handleAvatarClick}>
+              <Avatar src={<img src={avatar_scr} alt="avatar" />} />
+            </div>
             <p
               style={{
                 fontSize: '14px',
@@ -210,6 +220,7 @@ const Welcome: React.FC = () => {
               title={post.title}
               username={post.username}
               like={post.likes}
+              userAccount={post.userAccount}
             />
           ))}
         </div>

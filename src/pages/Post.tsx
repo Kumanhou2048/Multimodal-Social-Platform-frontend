@@ -4,6 +4,7 @@ import {
   getPostPicture,
   makeAComment,
 } from '@/services/ant-design-pro/api';
+import { history } from '@@/core/history';
 import { PageContainer } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
 import { Avatar, Button, Card, Carousel, Divider, Image, List, message } from 'antd';
@@ -24,6 +25,7 @@ interface Post {
   postTime: string;
   postTitle: string;
   postContent: string;
+  userAccount?: string;
 }
 
 const PostDetail: React.FC = () => {
@@ -34,6 +36,7 @@ const PostDetail: React.FC = () => {
   const [textBoxContent, setTextBoxContent] = useState('');
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
+  //let userAccount = currentUser?.userAccount;
 
   const fetchData = async () => {
     try {
@@ -98,6 +101,21 @@ const PostDetail: React.FC = () => {
     setTextBoxContent(e.target.value);
   };
 
+  const handleAvatarClick = async (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    event.stopPropagation();
+    const urlParams = new URL(window.location.href).searchParams;
+    history.push(urlParams.get('redirect') || '/personSetting/managePost/' + posts?.userAccount);
+  };
+
+  const handleCommentAvatarClick = async (
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    userAccount: string,
+  ) => {
+    event.stopPropagation();
+    const urlParams = new URL(window.location.href).searchParams;
+    history.push(urlParams.get('redirect') || '/personSetting/managePost/' + userAccount);
+  };
+
   return (
     <PageContainer
       header={{
@@ -122,7 +140,9 @@ const PostDetail: React.FC = () => {
               gap: '8px',
             }}
           >
-            <Avatar src={<img src={posts?.posterAvatarUrl} alt="avatar" />} />
+            <div onClick={handleAvatarClick}>
+              <Avatar src={<img src={posts?.posterAvatarUrl} alt="avatar" />} />
+            </div>
             <p
               style={{
                 fontSize: '20px',
@@ -196,7 +216,11 @@ const PostDetail: React.FC = () => {
               <List.Item>
                 <List.Item.Meta
                   key={index}
-                  avatar={<Avatar src={item.avatarUrl} alt="avatar" />}
+                  avatar={
+                    <div onClick={(event) => handleCommentAvatarClick(event, item.userAccount)}>
+                      <Avatar src={item.avatarUrl} alt="avatar" />
+                    </div>
+                  }
                   title={
                     <pre
                       style={{
