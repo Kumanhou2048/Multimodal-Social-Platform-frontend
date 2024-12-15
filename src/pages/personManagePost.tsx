@@ -232,7 +232,7 @@ const PersonManagePost: React.FC = () => {
     };
 
     fetchData();
-  }, [userAccount]);
+  }, [account]);
 
   // useEffect(() => {
   //   const urlParams = new URLSearchParams(window.location.search);
