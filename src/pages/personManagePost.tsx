@@ -1,4 +1,10 @@
-import { deleteNote, getManageUser, getUserPost, Likes } from '@/services/ant-design-pro/api';
+import {
+  deleteNote,
+  getLikePostsID,
+  getManageUser,
+  getUserPost,
+  PostLikes,
+} from '@/services/ant-design-pro/api';
 import { history } from '@@/core/history';
 import { LikeFilled, LikeOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
@@ -17,28 +23,43 @@ interface ManageUser {
 //点赞
 const LikeButton: React.FC<{
   postId: string;
+  userAccount?: string;
+  likelist: any[]; // likeList 数据格式：[{ postID: number }]
   onLikeChange: (newLikedState: boolean) => void;
-}> = ({ postId, onLikeChange }) => {
+}> = ({ postId, userAccount, likelist, onLikeChange }) => {
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
   const [liked, setLiked] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+
+  // useEffect 检查是否已经点赞过
+  useEffect(() => {
+    // 使用 some 来检查 likelist 中是否包含当前 postId
+    const isLiked = likelist.some((item) => item.postID === parseInt(postId)); // 通过 postID 比较
+    setLiked(isLiked);
+  }, [likelist, postId]);
+
   const handleLike = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     event.stopPropagation();
+    if (userAccount === currentUser?.userAccount) {
+      message.error('不能给自己点赞！');
+      return;
+    }
+
     if (loading) return;
     setLoading(true);
 
     const userId = currentUser?.id;
     const newLikedState = !liked;
-    //console.log(userId, postId);
+
     try {
       // 调用点赞 API，传递点赞状态
-      const response = await Likes({ userId, postId, newLikedState });
+      const response = await PostLikes({ userID: userId, postID: postId, status: newLikedState });
 
       if (response.status === 'success') {
-        setLiked(!liked); // 更新点赞状态
+        setLiked(newLikedState); // 更新点赞状态
         onLikeChange(newLikedState);
-        message.success(liked ? '取消点赞成功' : '点赞成功');
+        message.success(newLikedState ? '点赞成功' : '取消点赞成功');
       } else {
         message.error('操作失败，请重试');
       }
@@ -69,7 +90,8 @@ const Post: React.FC<{
   like: string;
   userAccount1: any;
   userAccount2: any;
-}> = ({ id, scr, avatar_scr, title, username, like, userAccount1, userAccount2 }) => {
+  likelist: any[];
+}> = ({ id, scr, avatar_scr, title, username, like, userAccount1, userAccount2, likelist }) => {
   const [likeCount, setLikeCount] = useState<number>(parseInt(like, 10));
 
   const handleClick = () => {
@@ -178,7 +200,12 @@ const Post: React.FC<{
                 gap: '8px',
               }}
             >
-              <LikeButton postId={id} onLikeChange={handleLikeChange}></LikeButton>
+              <LikeButton
+                postId={id}
+                userAccount={userAccount2}
+                onLikeChange={handleLikeChange}
+                likelist={likelist}
+              ></LikeButton>
               <p
                 style={{
                   fontSize: '12px',
@@ -202,6 +229,7 @@ const PersonManagePost: React.FC = () => {
   const [user, setUser] = useState<ManageUser | null>(null);
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
+  const [likeList, setLikeList] = useState<any[]>([]);
   let userAccount = currentUser?.userAccount;
   let { account } = useParams<{ account: string }>();
   if (account === ':account') {
@@ -216,7 +244,10 @@ const PersonManagePost: React.FC = () => {
         };
         const postsResult = await getUserPost(params);
         const userResult = await getManageUser(params);
+        const userid = (): API.UserID => ({ id: currentUser?.id });
+        const likeListResult = await getLikePostsID(userid());
         let post: any[] = [];
+        let likelist: any[] = [];
         let user: ManageUser;
         user = userResult;
         if (Array.isArray(postsResult)) {
@@ -224,6 +255,12 @@ const PersonManagePost: React.FC = () => {
             post.push(item);
           });
         }
+        if (Array.isArray(likeListResult)) {
+          likeListResult.forEach((item) => {
+            likelist.push(item);
+          });
+        }
+        setLikeList(likelist || []);
         setUser(user || []);
         setPosts(post || []);
       } catch (error) {
@@ -308,6 +345,7 @@ const PersonManagePost: React.FC = () => {
               like={post.likes}
               userAccount1={userAccount}
               userAccount2={account}
+              likelist={likeList}
             />
           ))}
         </div>

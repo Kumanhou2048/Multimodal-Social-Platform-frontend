@@ -177,6 +177,7 @@ declare namespace API {
     postTitle: string;
     postContent: string;
     userAccount?: string;
+    like?: any;
   };
 
   type PostPicture = {
@@ -216,5 +217,19 @@ declare namespace API {
   type ManageUser = {
     avatarUrl: string;
     userName: string;
+  };
+
+  type UserID = {
+    id: any;
+  };
+
+  type LikeList = {
+    likeList: list[];
+  };
+
+  type LikePost = {
+    userID: any;
+    postID: any;
+    status: any;
   };
 }

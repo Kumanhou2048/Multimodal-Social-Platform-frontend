@@ -1,4 +1,9 @@
-import { getSearchPagePost, getTotalSearchPosts, Likes } from '@/services/ant-design-pro/api';
+import {
+  getLikePostsID,
+  getSearchPagePost,
+  getTotalSearchPosts,
+  PostLikes,
+} from '@/services/ant-design-pro/api';
 import { history } from '@@/core/history';
 import { useParams } from '@@/exports';
 import { LikeFilled, LikeOutlined } from '@ant-design/icons';
@@ -12,28 +17,44 @@ const { Meta } = Card;
 //点赞
 const LikeButton: React.FC<{
   postId: string;
+  userAccount?: string;
+  likelist: any[]; // likeList 数据格式：[{ postID: number }]
   onLikeChange: (newLikedState: boolean) => void;
-}> = ({ postId, onLikeChange }) => {
+}> = ({ postId, userAccount, likelist, onLikeChange }) => {
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
   const [liked, setLiked] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+
+  // useEffect 检查是否已经点赞过
+  useEffect(() => {
+    // 使用 some 来检查 likelist 中是否包含当前 postId
+    const isLiked = likelist.some((item) => item.postID === parseInt(postId)); // 通过 postID 比较
+    setLiked(isLiked);
+  }, [likelist, postId]);
+
   const handleLike = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     event.stopPropagation();
+
+    if (userAccount === currentUser?.userAccount) {
+      message.error('不能给自己点赞！');
+      return;
+    }
+
     if (loading) return;
     setLoading(true);
 
     const userId = currentUser?.id;
     const newLikedState = !liked;
-    //console.log(userId, postId);
+
     try {
       // 调用点赞 API，传递点赞状态
-      const response = await Likes({ userId, postId, newLikedState });
+      const response = await PostLikes({ userID: userId, postID: postId, status: newLikedState });
 
       if (response.status === 'success') {
-        setLiked(!liked); // 更新点赞状态
+        setLiked(newLikedState); // 更新点赞状态
         onLikeChange(newLikedState);
-        message.success(liked ? '取消点赞成功' : '点赞成功');
+        message.success(newLikedState ? '点赞成功' : '取消点赞成功');
       } else {
         message.error('操作失败，请重试');
       }
@@ -64,7 +85,8 @@ const Post: React.FC<{
   like: string;
   searchKey: any;
   userAccount?: string;
-}> = ({ id, scr, avatar_scr, title, username, like, searchKey, userAccount }) => {
+  likelist: any[];
+}> = ({ id, scr, avatar_scr, title, username, like, searchKey, userAccount, likelist }) => {
   const [likeCount, setLikeCount] = useState<number>(parseInt(like, 10));
 
   const handleClick = () => {
@@ -145,7 +167,12 @@ const Post: React.FC<{
                 gap: '8px',
               }}
             >
-              <LikeButton postId={id} onLikeChange={handleLikeChange}></LikeButton>
+              <LikeButton
+                postId={id}
+                onLikeChange={handleLikeChange}
+                userAccount={userAccount}
+                likelist={likelist}
+              ></LikeButton>
               <p
                 style={{
                   fontSize: '14px',
@@ -167,6 +194,9 @@ const SearchPage: React.FC = () => {
   const { time } = useParams<{ time: string }>();
   const [posts, setPosts] = useState<any[]>([]);
   const [totalPosts, setTotalPosts] = useState<number>(0);
+  const [likeList, setLikeList] = useState<any[]>([]);
+  const { initialState } = useModel('@@initialState');
+  const { currentUser } = initialState || {};
 
   useEffect(() => {
     const fetchData = async () => {
@@ -174,17 +204,26 @@ const SearchPage: React.FC = () => {
         const searchKey = (): API.SearchKey => ({ key: key });
         const postsResult = await getSearchPagePost(searchKey());
         const totalPostsResult = await getTotalSearchPosts(searchKey());
+        const userid = (): API.UserID => ({ id: currentUser?.id });
+        const likeListResult = await getLikePostsID(userid());
 
         let post: any[] = [];
         let total: any;
+        let likelist: any[] = [];
         if (Array.isArray(postsResult)) {
           postsResult.forEach((item) => {
             post.push(item);
           });
         }
+        if (Array.isArray(likeListResult)) {
+          likeListResult.forEach((item) => {
+            likelist.push(item);
+          });
+        }
         total = totalPostsResult;
         setPosts(post || []);
         setTotalPosts(total);
+        setLikeList(likelist || []);
       } catch (error) {
         console.error('获取数据失败', error);
       }
@@ -219,6 +258,7 @@ const SearchPage: React.FC = () => {
               like={post.likes}
               searchKey={key}
               userAccount={post.userAccount}
+              likelist={likeList}
             />
           ))}
         </div>

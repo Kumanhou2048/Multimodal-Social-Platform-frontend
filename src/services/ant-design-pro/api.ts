@@ -178,15 +178,15 @@ export async function getTotalPosts() {
 }
 
 //给某个帖子点赞 输入点赞者id 点赞的帖子id 一个布尔值 true代表点赞 false代表取消点赞
-/** 给某个帖子点赞 PATCH /api/Likes **/
-export async function Likes(data: { userId: any; postId: string; newLikedState: boolean }) {
-  return request<API.LikesMessage>('/api/Likes', {
-    method: 'PATCH',
-    data: {
-      userId: data.userId,
-      postId: data.postId,
-      newLikedState: data.newLikedState,
+/** 给某个帖子点赞 POST /api/PostLikes **/
+export async function PostLikes(body: API.LikePost, options?: { [key: string]: any }) {
+  return request<API.LikesMessage>('/api/PostLikes', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
     },
+    data: body,
+    ...(options || {}),
   });
 }
 
@@ -272,6 +272,19 @@ export async function makeAComment(body: API.Comment, options?: { [key: string]:
 /** 发表评论 POST /api/getManageUser*/
 export async function getManageUser(body: API.getUserPostParams, options?: { [key: string]: any }) {
   return request<API.ManageUser>('/api/getManageUser', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
+//获取用户点赞过的所有帖子ID
+/** 发表评论 POST /api/getLikePostsID*/
+export async function getLikePostsID(body: API.UserID, options?: { [key: string]: any }) {
+  return request<API.LikeList>('/api/getLikePostsID', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

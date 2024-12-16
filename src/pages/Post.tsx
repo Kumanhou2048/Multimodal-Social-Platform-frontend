@@ -1,10 +1,13 @@
 import {
+  getLikePostsID,
   getPostComment,
   getPostDetail,
   getPostPicture,
   makeAComment,
+  PostLikes,
 } from '@/services/ant-design-pro/api';
 import { history } from '@@/core/history';
+import { LikeFilled, LikeOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
 import { Avatar, Button, Card, Carousel, Divider, Image, List, message } from 'antd';
@@ -28,6 +31,68 @@ interface Post {
   userAccount?: string;
 }
 
+//点赞
+const LikeButton: React.FC<{
+  postId: any;
+  userAccount?: string;
+  likelist: any[]; // likeList 数据格式：[{ postID: number }]
+  onLikeChange: (newLikedState: boolean) => void;
+}> = ({ postId, userAccount, likelist, onLikeChange }) => {
+  const { initialState } = useModel('@@initialState');
+  const { currentUser } = initialState || {};
+  const [liked, setLiked] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  // useEffect 检查是否已经点赞过
+  useEffect(() => {
+    // 使用 some 来检查 likelist 中是否包含当前 postId
+    const isLiked = likelist.some((item) => item.postID === parseInt(postId)); // 通过 postID 比较
+    setLiked(isLiked);
+  }, [likelist, postId]);
+
+  const handleLike = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    event.stopPropagation();
+
+    if (userAccount === currentUser?.userAccount) {
+      message.error('不能给自己点赞！');
+      return;
+    }
+
+    if (loading) return;
+    setLoading(true);
+
+    const userId = currentUser?.id;
+    const newLikedState = !liked;
+
+    try {
+      // 调用点赞 API，传递点赞状态
+      const response = await PostLikes({ userID: userId, postID: postId, status: newLikedState });
+
+      if (response.status === 'success') {
+        setLiked(newLikedState); // 更新点赞状态
+        onLikeChange(newLikedState);
+        message.success(newLikedState ? '点赞成功' : '取消点赞成功');
+      } else {
+        message.error('操作失败，请重试');
+      }
+    } catch (error) {
+      console.error('点赞请求失败', error);
+      message.error('请求失败，请重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button
+      type="text"
+      icon={liked ? <LikeFilled style={{ color: '#1890ff' }} /> : <LikeOutlined />}
+      onClick={handleLike}
+      style={{ fontSize: '24px' }}
+    />
+  );
+};
+
 const PostDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [posts, setPosts] = useState<Post | null>(null);
@@ -36,6 +101,8 @@ const PostDetail: React.FC = () => {
   const [textBoxContent, setTextBoxContent] = useState('');
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
+  const [likeCount, setLikeCount] = useState<number>(0);
+  const [likeList, setLikeList] = useState<any[]>([]);
   //let userAccount = currentUser?.userAccount;
 
   const fetchData = async () => {
@@ -44,10 +111,13 @@ const PostDetail: React.FC = () => {
       const posts = await getPostDetail(postid());
       const pictures = await getPostPicture(postid());
       const comments = await getPostComment(postid());
+      const userid = (): API.UserID => ({ id: currentUser?.id });
+      const likeListResult = await getLikePostsID(userid());
 
       let post: Post;
       let picture: any = [];
       let comment: any = [];
+      let likelist: any[] = [];
       post = posts;
       if (Array.isArray(pictures)) {
         pictures.forEach((item) => {
@@ -59,13 +129,24 @@ const PostDetail: React.FC = () => {
           comment.push(item);
         });
       }
+      if (Array.isArray(likeListResult)) {
+        likeListResult.forEach((item) => {
+          likelist.push(item);
+        });
+      }
 
       setPosts(post);
+      setLikeList(likelist || []);
       setPictures(picture || []);
       setComments(comment || []);
+      setLikeCount(posts?.like);
     } catch (error) {
       console.error('获取数据失败', error);
     }
+  };
+
+  const handleLikeChange = (newLikeState: boolean) => {
+    setLikeCount(newLikeState ? likeCount + 1 : likeCount - 1); // 根据点赞状态更新数量
   };
 
   // 提交评论时刷新评论
@@ -152,6 +233,20 @@ const PostDetail: React.FC = () => {
             >
               {posts?.posterName}
             </p>
+            <LikeButton
+              postId={id}
+              onLikeChange={handleLikeChange}
+              userAccount={posts?.userAccount}
+              likelist={likeList}
+            ></LikeButton>
+            <p
+              style={{
+                fontSize: '14px',
+                margin: 0,
+              }}
+            >
+              {likeCount}
+            </p>
             <div
               style={{
                 marginLeft: 'auto',
@@ -228,10 +323,28 @@ const PostDetail: React.FC = () => {
                         wordWrap: 'break-word',
                       }}
                     >
-                      {item.name}
+                      {
+                        <b
+                          style={{
+                            fontSize: '15px',
+                          }}
+                        >
+                          {item.name}
+                        </b>
+                      }
                     </pre>
                   }
-                  description={item.content}
+                  description={
+                    <p
+                      style={{
+                        wordWrap: 'break-word',
+                        wordBreak: 'break-word',
+                        whiteSpace: 'normal',
+                      }}
+                    >
+                      {item.content}
+                    </p>
+                  }
                 />
               </List.Item>
             )}
