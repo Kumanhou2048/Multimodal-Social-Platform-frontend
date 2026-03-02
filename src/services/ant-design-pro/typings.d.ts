@@ -92,7 +92,7 @@ declare namespace API {
     content?: string;
     noteType?: number;
     imageCount?: number;
-    imageUrl?: string[];
+    imageUrls?: string[];
   };
 
   type getUserTotalPostsParams = {

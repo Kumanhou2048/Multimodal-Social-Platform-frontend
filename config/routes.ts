@@ -18,7 +18,7 @@ export default [
     name: '个人设置',
     icon: 'SettingOutlined',
     routes: [
-      { path: '/personSetting', redirect: '/personInfoSetting/infoSetting' },
+      { path: '/personSetting', redirect: '/personSetting/infoSetting' },
       {
         path: '/personSetting/infoSetting',
         name: '个人信息管理页',

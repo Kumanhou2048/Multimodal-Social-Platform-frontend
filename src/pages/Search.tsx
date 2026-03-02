@@ -9,16 +9,16 @@ import { useParams } from '@@/exports';
 import { LikeFilled, LikeOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
-import { Avatar, Button, Card, message, Space } from 'antd';
+import { Avatar, Button, Card, message, Space, Row, Col, Typography, Empty, Spin } from 'antd';
 import React, { useEffect, useState } from 'react';
 
-const { Meta } = Card;
+const { Text } = Typography;
 
-//点赞
+// --- 子组件：点赞按钮 (同步之前的精致风格) ---
 const LikeButton: React.FC<{
   postId: string;
   userAccount?: string;
-  likelist: any[]; // likeList 数据格式：[{ postID: number }]
+  likelist: any[];
   onLikeChange: (newLikedState: boolean) => void;
 }> = ({ postId, userAccount, likelist, onLikeChange }) => {
   const { initialState } = useModel('@@initialState');
@@ -26,41 +26,31 @@ const LikeButton: React.FC<{
   const [liked, setLiked] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // useEffect 检查是否已经点赞过
   useEffect(() => {
-    // 使用 some 来检查 likelist 中是否包含当前 postId
-    const isLiked = likelist.some((item) => item.postID === parseInt(postId)); // 通过 postID 比较
+    const isLiked = likelist.some((item) => item.postID === parseInt(postId));
     setLiked(isLiked);
   }, [likelist, postId]);
 
-  const handleLike = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+  const handleLike = async (event: React.MouseEvent) => {
     event.stopPropagation();
-
     if (userAccount === currentUser?.userAccount) {
-      message.error('不能给自己点赞！');
+      message.warning('不能给自己点赞哦！');
       return;
     }
-
     if (loading) return;
     setLoading(true);
 
-    const userId = currentUser?.id;
-    const newLikedState = !liked;
-
     try {
-      // 调用点赞 API，传递点赞状态
-      const response = await PostLikes({ userID: userId, postID: postId, status: newLikedState });
-
+      const newLikedState = !liked;
+      const response = await PostLikes({
+        userID: currentUser?.id,
+        postID: postId,
+        status: newLikedState,
+      });
       if (response.status === 'success') {
-        setLiked(newLikedState); // 更新点赞状态
+        setLiked(newLikedState);
         onLikeChange(newLikedState);
-        message.success(newLikedState ? '点赞成功' : '取消点赞成功');
-      } else {
-        message.error('操作失败，请重试');
       }
-    } catch (error) {
-      console.error('点赞请求失败', error);
-      message.error('请求失败，请重试');
     } finally {
       setLoading(false);
     }
@@ -69,42 +59,35 @@ const LikeButton: React.FC<{
   return (
     <Button
       type="text"
-      icon={liked ? <LikeFilled style={{ color: '#1890ff' }} /> : <LikeOutlined />}
+      size="small"
+      icon={liked ? <LikeFilled style={{ color: '#ff4d4f' }} /> : <LikeOutlined />}
       onClick={handleLike}
-      style={{ fontSize: '24px' }}
+      style={{ display: 'flex', alignItems: 'center', fontSize: '18px' }}
     />
   );
 };
 
-const Post: React.FC<{
+// --- 子组件：搜索结果帖子卡片 ---
+const PostCard: React.FC<{
   id: string;
   scr: string;
   avatar_scr: string;
   title: string;
   username: string;
   like: string;
-  searchKey: any;
+  searchKey: string;
   userAccount?: string;
   likelist: any[];
 }> = ({ id, scr, avatar_scr, title, username, like, searchKey, userAccount, likelist }) => {
   const [likeCount, setLikeCount] = useState<number>(parseInt(like, 10));
 
-  const handleClick = () => {
-    const urlParams = new URL(window.location.href).searchParams;
-    history.push(urlParams.get('redirect') || '/post/' + id);
-  };
-
-  const handleLikeChange = (newLikeState: boolean) => {
-    setLikeCount(newLikeState ? likeCount + 1 : likeCount - 1); // 根据点赞状态更新数量
-  };
-
-  //关键字高亮显示
+  // 关键词高亮函数：优化了背景色和圆角
   const highlightText = (text: string, key: string) => {
     if (!key) return text;
     const parts = text.split(new RegExp(`(${key})`, 'gi'));
     return parts.map((part, index) =>
       part.toLowerCase() === key.toLowerCase() ? (
-        <span key={index} style={{ background: 'yellow' }}>
+        <span key={index} style={{ background: '#fff566', padding: '0 2px', borderRadius: '2px' }}>
           {part}
         </span>
       ) : (
@@ -113,156 +96,169 @@ const Post: React.FC<{
     );
   };
 
-  const handleAvatarClick = async (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    event.stopPropagation();
-    const urlParams = new URL(window.location.href).searchParams;
-    history.push(urlParams.get('redirect') || '/personSetting/managePost/' + userAccount);
-  };
-
   return (
-    <>
-      <Card
-        key={id}
-        hoverable
-        style={{ width: 275, height: 430 }}
-        cover={
+    <Card
+      hoverable
+      style={{
+        borderRadius: '12px',
+        overflow: 'hidden',
+        border: 'none',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+      }}
+      bodyStyle={{ padding: '12px' }}
+      cover={
+        <div style={{ height: '260px', overflow: 'hidden' }}>
           <img
-            alt="example"
+            alt={title}
             src={scr}
             style={{
-              width: '275px',
-              height: '330px',
+              width: '100%',
+              height: '100%',
               objectFit: 'cover',
+              transition: 'transform 0.4s',
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            onClick={() => history.push(`/post/${id}`)}
           />
-        }
-        onClick={handleClick}
+        </div>
+      }
+    >
+      <div
+        style={{
+          fontSize: '15px',
+          fontWeight: 600,
+          height: '22px',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          marginBottom: '12px',
+          cursor: 'pointer',
+        }}
+        onClick={() => history.push(`/post/${id}`)}
       >
-        <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
-          <Meta title={<span>{highlightText(title, searchKey)}</span>} />
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <div onClick={handleAvatarClick}>
-              <Avatar src={<img src={avatar_scr} alt="avatar" />} />
-            </div>
-            <p
-              style={{
-                fontSize: '14px',
-                margin: 0,
-                lineHeight: '14px',
-              }}
-            >
-              {username}
-            </p>
-            <div
-              style={{
-                marginLeft: 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <LikeButton
-                postId={id}
-                onLikeChange={handleLikeChange}
-                userAccount={userAccount}
-                likelist={likelist}
-              ></LikeButton>
-              <p
-                style={{
-                  fontSize: '14px',
-                  margin: 0,
-                }}
-              >
-                {likeCount}
-              </p>
-            </div>
-          </div>
+        {highlightText(title, searchKey)}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Space
+          size={8}
+          style={{ cursor: 'pointer' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            history.push(`/personSetting/managePost/${userAccount}`);
+          }}
+        >
+          <Avatar size={24} src={avatar_scr} />
+          <Text type="secondary" style={{ fontSize: '13px' }}>
+            {username}
+          </Text>
         </Space>
-      </Card>
-    </>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            background: '#f8f9fa',
+            padding: '2px 8px 2px 4px',
+            borderRadius: '15px',
+          }}
+        >
+          <LikeButton
+            postId={id}
+            onLikeChange={(state) => setLikeCount(state ? likeCount + 1 : likeCount - 1)}
+            userAccount={userAccount}
+            likelist={likelist}
+          />
+          <span style={{ fontSize: '12px', fontWeight: 500, color: '#444' }}>{likeCount}</span>
+        </div>
+      </div>
+    </Card>
   );
 };
 
+// --- 主页面 ---
 const SearchPage: React.FC = () => {
   const { key } = useParams<{ key: string }>();
-  const { time } = useParams<{ time: string }>();
+  const { time } = useParams<{ time: string }>(); // time 用于触发刷新
   const [posts, setPosts] = useState<any[]>([]);
   const [totalPosts, setTotalPosts] = useState<number>(0);
   const [likeList, setLikeList] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        const searchKey = (): API.SearchKey => ({ key: key });
-        const postsResult = await getSearchPagePost(searchKey());
-        const totalPostsResult = await getTotalSearchPosts(searchKey());
-        const userid = (): API.UserID => ({ id: currentUser?.id });
-        const likeListResult = await getLikePostsID(userid());
+        const searchKey = { key };
+        // 并发请求优化
+        const [postsResult, totalResult, likeResult] = await Promise.all([
+          getSearchPagePost(searchKey),
+          getTotalSearchPosts(searchKey),
+          getLikePostsID({ id: currentUser?.id }),
+        ]);
 
-        let post: any[] = [];
-        let total: any;
-        let likelist: any[] = [];
-        if (Array.isArray(postsResult)) {
-          postsResult.forEach((item) => {
-            post.push(item);
-          });
-        }
-        if (Array.isArray(likeListResult)) {
-          likeListResult.forEach((item) => {
-            likelist.push(item);
-          });
-        }
-        total = totalPostsResult;
-        setPosts(post || []);
-        setTotalPosts(total);
-        setLikeList(likelist || []);
+        setPosts(Array.isArray(postsResult) ? postsResult : []);
+        setTotalPosts(Number(totalResult) || 0);
+        setLikeList(Array.isArray(likeResult) ? likeResult : []);
       } catch (error) {
-        console.error('获取数据失败', error);
+        console.error('获取搜索数据失败', error);
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchData();
   }, [key, time]);
 
   return (
     <PageContainer
-      header={{
-        title: '共有 ' + totalPosts + ' 个搜索结果 关于：' + key,
-      }}
-    >
-      <Card>
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '16px',
-            justifyContent: 'flex-start',
-          }}
-        >
-          {posts.map((post, index) => (
-            <Post
-              key={index}
-              id={post.id}
-              scr={post.imageUrl}
-              avatar_scr={post.avatarUrl}
-              title={post.title}
-              username={post.username}
-              like={post.likes}
-              searchKey={key}
-              userAccount={post.userAccount}
-              likelist={likeList}
-            />
-          ))}
+      title={false}
+      ghost
+      content={
+        <div style={{ padding: '8px 0' }}>
+          <Text type="secondary" style={{ fontSize: '16px' }}>
+            关于 “
+            <Text strong color="red">
+              {key}
+            </Text>
+            ” 的搜索结果，共 {totalPosts} 条
+          </Text>
         </div>
-      </Card>
+      }
+    >
+      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <Spin spinning={loading} tip="正在搜索...">
+          {posts.length > 0 ? (
+            <Row gutter={[20, 24]}>
+              {posts.map((post) => (
+                <Col xs={24} sm={12} md={8} lg={6} xl={4} key={post.id}>
+                  <PostCard
+                    id={post.id}
+                    scr={post.imageUrl}
+                    avatar_scr={post.avatarUrl}
+                    title={post.title}
+                    username={post.username}
+                    like={post.likes}
+                    searchKey={key || ''}
+                    userAccount={post.userAccount}
+                    likelist={likeList}
+                  />
+                </Col>
+              ))}
+            </Row>
+          ) : (
+            !loading && (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="换个关键词试试吧，没找到相关内容"
+                style={{ marginTop: 100 }}
+              />
+            )
+          )}
+        </Spin>
+      </div>
     </PageContainer>
   );
 };

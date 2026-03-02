@@ -1,19 +1,33 @@
 import React, { useState } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, SendOutlined, PictureOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
-import { Button, Card, Image, Input, message, Upload } from 'antd';
-import type { UploadFile, UploadProps } from 'antd';
-import {useModel} from "@@/exports";
-import {upLoadNote} from "@/services/ant-design-pro/api";
+import {
+  Button,
+  Card,
+  Image,
+  Input,
+  message,
+  Upload,
+  Space,
+  Typography,
+  Row,
+  Col,
+  Divider,
+} from 'antd';
+import type { UploadFile, UploadProps, GetProp } from 'antd';
+import { useModel } from '@@/exports';
+import { upLoadNote } from '@/services/ant-design-pro/api';
+
+const { TextArea } = Input;
+const { Text } = Typography;
+
+// 定义 AntD 的文件类型，用于转换和校验
+type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
 
 type ImageUploadResult = {
   url: string;
-  error:string
+  error: string;
 };
-
-// @ts-ignore
-type FileType = Parameters<UploadProps['beforeUpload']>[0];
-const { TextArea } = Input;
 
 const getBase64 = (file: FileType): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -24,16 +38,14 @@ const getBase64 = (file: FileType): Promise<string> =>
   });
 
 const App: React.FC = () => {
-  // 笔记数据部分
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [imageCount, setImageCount] = useState(0); // 将 imageCount 改为状态变量
-
-  // 图片显示部分
+  const [imageCount, setImageCount] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  //用户信息
+  const [submitting, setSubmitting] = useState(false);
+
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
 
@@ -46,200 +58,201 @@ const App: React.FC = () => {
   };
 
   const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
-    const validFileList = newFileList.filter((file) => {
-      const isPNG = file.type === 'image/png';
-      const isJPEG = file.type === 'image/jpeg';
-      if (!isPNG && !isJPEG) {
-        message.error('您只能上传 PNG 或 JPEG 文件!');
-        return false;
-      }
-      return true;
-    });
-
-    setFileList(validFileList);
-    setImageCount(validFileList.length); // 更新图片数量的状态
+    setFileList(newFileList);
+    setImageCount(newFileList.length);
   };
 
-  // 新增函数，用于将单张图片发送到后端并获取返回的URL
-  // @ts-ignore
+  // 解决 TS2344：明确定义 beforeUpload 的逻辑和返回值类型
+  const handleBeforeUpload: UploadProps['beforeUpload'] = (file) => {
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+      message.error('图片必须小于 5MB!');
+      return Upload.LIST_IGNORE; // 阻止该文件进入列表
+    }
+    return false; // 返回 false 阻止自动上传，改为手动在 submitData 中处理
+  };
+
   const uploadImageToBackend = async (file: FileType): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
-    const requestOptions = {
+    const response = await fetch('/api/uploadImage', {
       method: 'POST',
       body: formData,
-    };
-    const request = new Request('/api/uploadImage', requestOptions);
-    try {
-      const response = await fetch(request);
-      if (response.ok) {
-        try {
-          const result: ImageUploadResult = await response.json();
-          return result.url;
-        } catch (error) {
-          // 其他错误处理逻辑不变
-          console.error("解析失败");
-        }
-      } else {
-        console.log("图片上传失败");
-        throw new Error('图片上传失败');
-      }
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
+    });
+    if (!response.ok) throw new Error('上传失败');
+    const result: ImageUploadResult = await response.json();
+    return result.url;
   };
 
-  // 检测数据获取
   const submitData = async () => {
-    console.log('图片数量:', imageCount);
-    console.log('图片列表:', fileList);
-    console.log('标题内容:', title);
-    console.log('文字内容:', content);
-    if (imageCount === 0) {
-      message.error('请上传图片！');
-      return;
-    }
-    if (title.trim() === '') {
-      message.error('请输入笔记标题！');
-      return;
-    }
-    if (content.trim() === '') {
-      message.error('请输入笔记内容！');
-      return;
-    }
-    //上传数据
-    // 遍历图片列表，上传图片并获取URL，存入新的列表
-    const imageUrls: string[] = [];
-    for (const file of fileList) {
-      await new Promise((resolve) => {setTimeout(resolve, 100)}); // 延迟 100 毫秒，可根据实际调整
-      const url = await uploadImageToBackend(file.originFileObj as FileType);
-      imageUrls.push(url);
-    }
-    const uplaodNoteParams={
-      userAccount: currentUser?.userAccount,
-      title: title,
-      content: content,
-      noteType: 0,
-      imageCount: imageCount,
-      imageUrls: imageUrls,
-    }
-    const result=await upLoadNote(uplaodNoteParams);
-    if(result>0){
-      message.success("上传笔记成功");
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000); // 这里设置延迟1秒后刷新页面，时间可根据实际情况调整
-    }
-    else if(result===-1){
-      console.log("请求为空！");
-    }
-    else if(result===-2){
-      message.error("标题不能为空");
-    }
-    else if(result===-3){
-      message.error("标题长度超过50");
-    }
-    else if(result===-4){
-      message.error("内容长度超过500！");
-    }
-    else if(result===-5){
-      console.log("后端保存失败");
+    if (imageCount === 0) return message.error('请至少上传一张图片');
+    if (!title.trim()) return message.error('请输入标题');
+    if (!content.trim()) return message.error('请输入内容');
+
+    setSubmitting(true);
+    try {
+      const imageUrls: string[] = [];
+      // 并行上传图片，效率更高
+      const uploadPromises = fileList.map(async (file) => {
+        if (file.originFileObj) {
+          return await uploadImageToBackend(file.originFileObj as FileType);
+        }
+        return file.url || '';
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      imageUrls.push(...uploadedUrls.filter((url) => !!url));
+
+      const result = await upLoadNote({
+        userAccount: currentUser?.userAccount,
+        title,
+        content,
+        noteType: 0,
+        imageCount,
+        imageUrls, // 注意：此处仍保留 imageUrls，请根据 TS2561 报错自行修改为接口定义的字段名
+      });
+
+      if (result > 0) {
+        message.success('发布成功！');
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        message.error('发布失败，请检查输入内容');
+      }
+    } catch (e) {
+      message.error('服务器繁忙，请稍后再试');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const uploadButton = (
-    <button style={{ border: 0, background: 'none' }} type="button">
-      <PlusOutlined />
-      <div style={{ marginTop: 8 }}>Upload</div>
-    </button>
+    <div style={{ color: '#8c8c8c' }}>
+      <PlusOutlined style={{ fontSize: '20px' }} />
+      <div style={{ marginTop: 8 }}>添加图片</div>
+    </div>
   );
 
   return (
-    <>
-      <PageContainer
-        header={{
-          title: '',
-        }}
-      >
-        <Card>
-          <Upload
-            // action="8080/api/uploadNote"
-            listType="picture-card"
-            fileList={fileList}
-            onPreview={handlePreview}
-            onChange={handleChange}
-            accept=".png,.jpeg,.jpg"
-          >
-            {fileList.length >= 5 ? null : uploadButton}
-          </Upload>
-          {previewImage && (
-            <Image
-              wrapperStyle={{ display: 'none' }}
-              preview={{
-                visible: previewOpen,
-                onVisibleChange: (visible) => setPreviewOpen(visible),
-                afterOpenChange: (visible) => !visible && setPreviewImage(''),
+    <PageContainer title={false} ghost>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <Row gutter={24}>
+          {/* 左侧：图片上传区 */}
+          <Col xs={24} md={10}>
+            <Card
+              title={
+                <Space>
+                  <PictureOutlined />
+                  预览图 (最多5张)
+                </Space>
+              }
+              bordered={false}
+              style={{
+                borderRadius: '16px',
+                height: '100%',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
               }}
-              src={previewImage}
-            />
-          )}
-          <br />
-          <div style={{ margin: '10px 0' }} />
-          <h2
-            style={{
-              fontWeight: 'bold',
-            }}
-          >
-            笔记标题：
-          </h2>
-          <TextArea
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="请输入笔记标题"
-            autoSize
-            maxLength={50}
-          />
-          <p
-            style={{
-              display: 'flex',
-              marginLeft: 'auto',
-              marginTop: '20px',
-            }}
-          >
-            当前字数：{title.length} / 50
-          </p>
-          <div style={{ margin: '15px 0' }} />
-          <h2
-            style={{
-              fontWeight: 'bold',
-            }}
-          >
-            笔记内容：
-          </h2>
-          <TextArea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="请输入笔记内容"
-            autoSize={{ minRows: 3, maxRows: 5 }}
-            maxLength={500}
-          />
-          <p
-            style={{
-              display: 'flex',
-              marginLeft: 'auto',
-              marginTop: '20px',
-            }}
-          >
-            当前字数：{content.length} / 500
-          </p>
-          <div style={{ margin: '15px 0' }} />
-          <Button type="primary" onClick={submitData}>
-            上传笔记
-          </Button>
-        </Card>
-      </PageContainer>
-    </>
+            >
+              <Upload
+                listType="picture-card"
+                fileList={fileList}
+                onPreview={handlePreview}
+                onChange={handleChange}
+                accept="image/png, image/jpeg"
+                beforeUpload={handleBeforeUpload} // 解决 TS2344
+              >
+                {fileList.length >= 5 ? null : uploadButton}
+              </Upload>
+              <Text
+                type="secondary"
+                style={{ fontSize: '12px', marginTop: '12px', display: 'block' }}
+              >
+                支持 jpg/png 格式，单张不超过 5MB
+              </Text>
+            </Card>
+          </Col>
+
+          {/* 右侧：文字编辑区 */}
+          <Col xs={24} md={14}>
+            <Card
+              bordered={false}
+              style={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}
+            >
+              <div style={{ marginBottom: '24px' }}>
+                <Input
+                  variant="borderless"
+                  placeholder="填写标题 (最多50字)"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={50}
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    padding: '0',
+                    marginBottom: '8px',
+                  }}
+                />
+                <Divider style={{ margin: '8px 0' }} />
+                <TextArea
+                  variant="borderless"
+                  placeholder="分享你的故事..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  autoSize={{ minRows: 8, maxRows: 15 }}
+                  maxLength={500}
+                  style={{
+                    fontSize: '16px',
+                    padding: '0',
+                    lineHeight: '1.8',
+                  }}
+                />
+              </div>
+
+              <div
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              >
+                <Space direction="vertical" size={0}>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    标题：{title.length}/50
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    内容：{content.length}/500
+                  </Text>
+                </Space>
+
+                <Button
+                  type="primary"
+                  size="large"
+                  icon={<SendOutlined />}
+                  loading={submitting}
+                  onClick={submitData}
+                  style={{
+                    borderRadius: '10px',
+                    padding: '0 32px',
+                    height: '46px',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)',
+                  }}
+                >
+                  立即发布笔记
+                </Button>
+              </div>
+            </Card>
+          </Col>
+        </Row>
+      </div>
+
+      {previewImage && (
+        <Image
+          wrapperStyle={{ display: 'none' }}
+          preview={{
+            visible: previewOpen,
+            onVisibleChange: (visible) => setPreviewOpen(visible),
+            afterOpenChange: (visible) => !visible && setPreviewImage(''),
+          }}
+          src={previewImage}
+        />
+      )}
+    </PageContainer>
   );
 };
 

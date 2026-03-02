@@ -6,25 +6,38 @@ import {
   PostLikes,
 } from '@/services/ant-design-pro/api';
 import { history } from '@@/core/history';
-import { LikeFilled, LikeOutlined } from '@ant-design/icons';
+import {
+  LikeFilled,
+  LikeOutlined,
+  DeleteOutlined,
+  ExclamationCircleOutlined,
+} from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
-import { useModel } from '@umijs/max';
-import { Avatar, Button, Card, message, Modal, Space } from 'antd';
+import { useModel, useParams } from '@umijs/max';
+import {
+  Avatar,
+  Button,
+  Card,
+  message,
+  Modal,
+  Space,
+  Typography,
+  Row,
+  Col,
+  Empty,
+  Tag,
+  Divider,
+  Spin, // 👈 引入了 Spin
+} from 'antd';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'umi';
 
-const { Meta } = Card;
+const { Text, Title } = Typography;
 
-interface ManageUser {
-  avatarUrl: string;
-  userName: string;
-}
-
-//点赞
+// --- 点赞按钮组件 ---
 const LikeButton: React.FC<{
   postId: string;
   userAccount?: string;
-  likelist: any[]; // likeList 数据格式：[{ postID: number }]
+  likelist: any[];
   onLikeChange: (newLikedState: boolean) => void;
 }> = ({ postId, userAccount, likelist, onLikeChange }) => {
   const { initialState } = useModel('@@initialState');
@@ -32,40 +45,30 @@ const LikeButton: React.FC<{
   const [liked, setLiked] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // useEffect 检查是否已经点赞过
   useEffect(() => {
-    // 使用 some 来检查 likelist 中是否包含当前 postId
-    const isLiked = likelist.some((item) => item.postID === parseInt(postId)); // 通过 postID 比较
+    const isLiked = likelist.some((item) => item.postID === parseInt(postId));
     setLiked(isLiked);
   }, [likelist, postId]);
 
-  const handleLike = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+  const handleLike = async (event: React.MouseEvent) => {
     event.stopPropagation();
     if (userAccount === currentUser?.userAccount) {
-      message.error('不能给自己点赞！');
+      message.warning('不能给自己点赞哦');
       return;
     }
-
     if (loading) return;
     setLoading(true);
-
-    const userId = currentUser?.id;
-    const newLikedState = !liked;
-
     try {
-      // 调用点赞 API，传递点赞状态
-      const response = await PostLikes({ userID: userId, postID: postId, status: newLikedState });
-
+      const newLikedState = !liked;
+      const response = await PostLikes({
+        userID: currentUser?.id,
+        postID: postId,
+        status: newLikedState,
+      });
       if (response.status === 'success') {
-        setLiked(newLikedState); // 更新点赞状态
+        setLiked(newLikedState);
         onLikeChange(newLikedState);
-        message.success(newLikedState ? '点赞成功' : '取消点赞成功');
-      } else {
-        message.error('操作失败，请重试');
       }
-    } catch (error) {
-      console.error('点赞请求失败', error);
-      message.error('请求失败，请重试');
     } finally {
       setLoading(false);
     }
@@ -74,282 +77,218 @@ const LikeButton: React.FC<{
   return (
     <Button
       type="text"
-      icon={liked ? <LikeFilled style={{ color: '#1890ff' }} /> : <LikeOutlined />}
+      size="small"
+      icon={liked ? <LikeFilled style={{ color: '#ff4d4f' }} /> : <LikeOutlined />}
       onClick={handleLike}
-      style={{ fontSize: '24px' }}
+      style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}
     />
   );
 };
 
+// --- 帖子卡片组件 ---
 const Post: React.FC<{
   id: string;
   scr: string;
-  avatar_scr: string;
   title: string;
-  username: string;
   like: string;
-  userAccount1: any;
-  userAccount2: any;
+  isOwner: boolean;
   likelist: any[];
-}> = ({ id, scr, avatar_scr, title, username, like, userAccount1, userAccount2, likelist }) => {
+}> = ({ id, scr, title, like, isOwner, likelist }) => {
   const [likeCount, setLikeCount] = useState<number>(parseInt(like, 10));
 
-  const handleClick = () => {
-    const urlParams = new URL(window.location.href).searchParams;
-    history.push(urlParams.get('redirect') || '/post/' + id);
-  };
-
-  const handleLikeChange = (newLikeState: boolean) => {
-    setLikeCount(newLikeState ? likeCount + 1 : likeCount - 1); // 根据点赞状态更新数量
-  };
-
-  // 定义一个函数用于处理删除按钮的点击事件，这里可以添加具体的删除逻辑，比如发送删除请求等
-  const handleDeleteClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    // 阻止事件冒泡，避免触发父元素（Card）的点击事件（handleClick）
+  const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-
     Modal.confirm({
-      title: '确认删除',
-      content: '确定要删除这篇笔记吗？',
+      title: '确认删除笔记？',
+      icon: <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />,
+      content: '删除后内容将无法找回，请谨慎操作。',
+      okText: '确认删除',
+      okType: 'danger',
+      cancelText: '取消',
       onOk: async () => {
-        const result = await deleteNote({
-          //把id作为数字传入
-          id: parseInt(id, 10),
-        });
+        const result = await deleteNote({ id: parseInt(id, 10) });
         if (result === 1) {
-          message.success('删除成功');
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000); // 这里设置延迟1秒后刷新页面，时间可根据实际情况调整
-          return;
-        } else {
-          message.error('笔记删除失败');
+          message.success('已删除');
+          window.location.reload();
         }
       },
     });
   };
 
-  const handleAvatarClick = async (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    event.stopPropagation();
-    const urlParams = new URL(window.location.href).searchParams;
-    history.push(urlParams.get('redirect') || '/personSetting/managePost/' + userAccount2);
-  };
-
-  const deleteButton = (
-    <Button
-      type="primary"
-      style={{
-        color: 'white',
-        marginLeft: '10px',
-      }}
-      onClick={handleDeleteClick}
-    >
-      删除
-    </Button>
-  );
-
   return (
-    <>
-      <Card
-        key={id}
-        hoverable
-        style={{ width: 275, height: 430 }}
-        cover={
+    <Card
+      hoverable
+      style={{
+        borderRadius: '12px',
+        overflow: 'hidden',
+        border: 'none',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+      }}
+      bodyStyle={{ padding: '12px' }}
+      cover={
+        <div style={{ position: 'relative', height: '280px', overflow: 'hidden' }}>
           <img
-            alt="example"
+            alt={title}
             src={scr}
-            style={{
-              width: '275px',
-              height: '330px',
-              objectFit: 'cover',
-            }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            onClick={() => history.push(`/post/${id}`)}
           />
-        }
-        onClick={handleClick}
+          {isOwner && (
+            <Button
+              type="primary"
+              danger
+              shape="circle"
+              icon={<DeleteOutlined />}
+              onClick={handleDelete}
+              style={{ position: 'absolute', top: '10px', right: '10px', opacity: 0.8 }}
+            />
+          )}
+        </div>
+      }
+    >
+      <Title level={5} ellipsis={{ rows: 1 }} style={{ marginBottom: '8px', fontSize: '15px' }}>
+        {title}
+      </Title>
+      <div
+        style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '4px' }}
       >
-        <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
-          <Meta title={title} />
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <div onClick={handleAvatarClick}>
-              <Avatar src={<img src={avatar_scr} alt="avatar" />} />
-            </div>
-            <p
-              style={{
-                fontSize: '13px',
-                margin: 0,
-                lineHeight: '14px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '100px', // 根据字体大小设置宽度限制
-              }}
-            >
-              {username}
-            </p>
-            <div
-              style={{
-                marginLeft: 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <LikeButton
-                postId={id}
-                userAccount={userAccount2}
-                onLikeChange={handleLikeChange}
-                likelist={likelist}
-              ></LikeButton>
-              <p
-                style={{
-                  fontSize: '12px',
-                  margin: 0,
-                }}
-              >
-                {likeCount}
-              </p>
-              {/* 添加删除按钮，设置按钮的类型、样式以及点击事件处理函数 */}
-              {userAccount1 === userAccount2 ? deleteButton : null}
-            </div>
-          </div>
-        </Space>
-      </Card>
-    </>
+        <LikeButton
+          postId={id}
+          likelist={likelist}
+          onLikeChange={(state) => setLikeCount(state ? likeCount + 1 : likeCount - 1)}
+        />
+        <Text type="secondary" style={{ fontSize: '13px' }}>
+          {likeCount}
+        </Text>
+      </div>
+    </Card>
   );
 };
 
+// --- 主页面 ---
 const PersonManagePost: React.FC = () => {
   const [posts, setPosts] = useState<any[]>([]);
-  const [user, setUser] = useState<ManageUser | null>(null);
+  const [user, setUser] = useState<any>(null);
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
   const [likeList, setLikeList] = useState<any[]>([]);
-  let userAccount = currentUser?.userAccount;
+  const [loading, setLoading] = useState(true); // 👈 现在这里将被使用
+
   let { account } = useParams<{ account: string }>();
-  if (account === ':account') {
+  if (!account || account === ':account') {
     account = currentUser?.userAccount;
   }
+
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true); // 👈 开始加载
       try {
-        // 定义参数时附加 userAccount
-        const params = {
-          userAccount: account, // 添加 userAccount 参数
-        };
-        const postsResult = await getUserPost(params);
-        const userResult = await getManageUser(params);
-        const userid = (): API.UserID => ({ id: currentUser?.id });
-        const likeListResult = await getLikePostsID(userid());
-        let post: any[] = [];
-        let likelist: any[] = [];
-        let user: ManageUser;
-        user = userResult;
-        if (Array.isArray(postsResult)) {
-          postsResult.forEach((item) => {
-            post.push(item);
-          });
-        }
-        if (Array.isArray(likeListResult)) {
-          likeListResult.forEach((item) => {
-            likelist.push(item);
-          });
-        }
-        setLikeList(likelist || []);
-        setUser(user || []);
-        setPosts(post || []);
+        const params = { userAccount: account };
+        const [postsResult, userResult, likeListResult] = await Promise.all([
+          getUserPost(params),
+          getManageUser(params),
+          getLikePostsID({ id: currentUser?.id }),
+        ]);
+
+        setPosts(Array.isArray(postsResult) ? postsResult : []);
+        setUser(userResult);
+        setLikeList(Array.isArray(likeListResult) ? likeListResult : []);
       } catch (error) {
-        console.error('获取数据失败', error);
+        message.error('加载数据失败');
+      } finally {
+        setLoading(false); // 👈 结束加载
       }
     };
-
     fetchData();
-  }, [account]);
+  }, [account, currentUser?.id]);
 
-  // useEffect(() => {
-  //   const urlParams = new URLSearchParams(window.location.search);
-  //   const pageFromUrl = parseInt(urlParams.get('page') || '1', 10);
-  //   const totalPages = Math.ceil(totalPosts / pageSize);
-  //
-  //   let page = pageFromUrl;
-  //   if (pageFromUrl > totalPages) {
-  //     page = totalPages;
-  //   } else if (pageFromUrl < 1) {
-  //     page = 1;
-  //   }
-  //
-  //   setPageNumber(page);
-  // }, [totalPosts]);
+  const isOwner = currentUser?.userAccount === account;
 
   return (
-    <PageContainer
-      header={{
-        title: '',
-      }}
-    >
-      <Card
-        style={{
-          width: '100%',
-          borderRadius: '10px', // 圆角
-          border: '1px solid #e0e0e0', // 边框
-          backgroundColor: '#fff', // 白色背景
-          padding: '20px', // 卡片内边距
-          display: 'flex', // 使用 Flex 布局
-          justifyContent: 'center', // 水平居中
-          alignItems: 'center', // 垂直居中
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center', // 头像和文字垂直居中
-          }}
-        >
-          <Avatar src={user?.avatarUrl} size={70} />
-          <div
+    <PageContainer title={false} ghost>
+      {/* 核心：使用 Spin 包裹内容，解决 ESLint 报错并优化体验 */}
+      <Spin spinning={loading} tip="正在获取精彩内容...">
+        <div style={{ maxWidth: '1200px', margin: '0 auto', minHeight: '60vh' }}>
+          {/* 顶部个人资料卡片 */}
+          <Card
+            bordered={false}
             style={{
-              marginLeft: 16, // 调整头像与文字的间距
+              borderRadius: '20px',
+              marginBottom: '24px',
+              background: 'linear-gradient(to right, #ffffff, #f0f7ff)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
             }}
           >
-            <p style={{ margin: 0, fontWeight: 'bold', fontSize: '25px' }}>
-              {user?.userName || '用户名'}
-            </p>
-            <p style={{ margin: 0, fontSize: '17px', color: '#555' }}>
-              小蓝书号：{account || '未知'}
-            </p>
-          </div>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '10px' }}>
+              <Avatar
+                src={user?.avatarUrl}
+                size={100}
+                style={{ border: '4px solid #fff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              />
+              <div style={{ marginLeft: '32px', flex: 1 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <Title level={2} style={{ margin: 0 }}>
+                    {user?.userName || (loading ? '加载中...' : '未知用户')}
+                  </Title>
+                  {isOwner && <Tag color="blue">我的主页</Tag>}
+                </div>
+                <Space split={<Divider type="vertical" />} style={{ color: '#666' }}>
+                  <Text type="secondary">
+                    账号：<Text strong>{account}</Text>
+                  </Text>
+                  <Text type="secondary">
+                    笔记：<Text strong>{posts.length}</Text>
+                  </Text>
+                  <Text type="secondary">
+                    获赞：
+                    <Text strong>
+                      {posts.reduce((acc, cur) => acc + (parseInt(cur.likes) || 0), 0)}
+                    </Text>
+                  </Text>
+                </Space>
+              </div>
+              {isOwner && (
+                <Button shape="round" onClick={() => history.push('/personSetting/infoSetting')}>
+                  编辑资料
+                </Button>
+              )}
+            </div>
+          </Card>
+
+          {/* 帖子列表区 */}
+          <Card
+            title={<span style={{ fontSize: '18px', fontWeight: 600 }}>全部动态</span>}
+            bordered={false}
+            style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}
+          >
+            {posts.length > 0 ? (
+              <Row gutter={[20, 24]}>
+                {posts.map((post) => (
+                  <Col xs={24} sm={12} md={8} lg={6} key={post.id}>
+                    <Post
+                      id={post.id}
+                      scr={post.imageUrl}
+                      title={post.title}
+                      like={post.likes}
+                      isOwner={isOwner}
+                      likelist={likeList}
+                    />
+                  </Col>
+                ))}
+              </Row>
+            ) : (
+              !loading && <Empty description="还没有发布过笔记呢" style={{ padding: '60px 0' }} />
+            )}
+          </Card>
         </div>
-      </Card>
-      <Card title="发布的帖子">
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '16px',
-            justifyContent: 'flex-start',
-          }}
-        >
-          {posts.map((post, index) => (
-            <Post
-              key={index}
-              id={post.id}
-              scr={post.imageUrl}
-              avatar_scr={post.avatarUrl}
-              title={post.title}
-              username={post.username}
-              like={post.likes}
-              userAccount1={userAccount}
-              userAccount2={account}
-              likelist={likeList}
-            />
-          ))}
-        </div>
-      </Card>
+      </Spin>
     </PageContainer>
   );
 };
