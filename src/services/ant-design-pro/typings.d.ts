@@ -232,4 +232,21 @@ declare namespace API {
     postID: any;
     status: any;
   };
+
+  type UserAccount = {
+    followerAccount?: string;
+    followingAccount?: string;
+  };
+
+  type FollowingsList = {
+    FollowingsList: list[];
+  };
+
+  type FollowersList = {
+    FollowersList: list[];
+  };
+
+  type getFollower = {
+    account: String;
+  };
 }

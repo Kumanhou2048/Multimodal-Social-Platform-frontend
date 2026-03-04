@@ -4,13 +4,16 @@ import {
   getManageUser,
   getUserPost,
   PostLikes,
+  Follows, // 关注/取消关注接口
+  getFollowings, // 👈 获取我关注的人的列表
 } from '@/services/ant-design-pro/api';
 import { history } from '@@/core/history';
 import {
   LikeFilled,
   LikeOutlined,
   DeleteOutlined,
-  ExclamationCircleOutlined,
+  UserAddOutlined,
+  UserDeleteOutlined,
 } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useModel, useParams } from '@umijs/max';
@@ -27,13 +30,13 @@ import {
   Empty,
   Tag,
   Divider,
-  Spin, // 👈 引入了 Spin
+  Spin,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
 
 const { Text, Title } = Typography;
 
-// --- 点赞按钮组件 ---
+// --- 点赞按钮组件 (保持不变) ---
 const LikeButton: React.FC<{
   postId: string;
   userAccount?: string;
@@ -46,14 +49,18 @@ const LikeButton: React.FC<{
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    const isLiked = likelist.some((item) => item.postID === parseInt(postId));
+    const isLiked = likelist.some((item) => item.postID === parseInt(postId, 10));
     setLiked(isLiked);
   }, [likelist, postId]);
 
   const handleLike = async (event: React.MouseEvent) => {
     event.stopPropagation();
+    if (!currentUser) {
+      message.warning('请先登录');
+      return;
+    }
     if (userAccount === currentUser?.userAccount) {
-      message.warning('不能给自己点赞哦');
+      message.warning('不能给自己点赞哦！');
       return;
     }
     if (loading) return;
@@ -85,7 +92,7 @@ const LikeButton: React.FC<{
   );
 };
 
-// --- 帖子卡片组件 ---
+// --- 帖子卡片组件 (保持不变) ---
 const Post: React.FC<{
   id: string;
   scr: string;
@@ -93,18 +100,15 @@ const Post: React.FC<{
   like: string;
   isOwner: boolean;
   likelist: any[];
-}> = ({ id, scr, title, like, isOwner, likelist }) => {
+  userAccount: string;
+}> = ({ id, scr, title, like, isOwner, likelist, userAccount }) => {
   const [likeCount, setLikeCount] = useState<number>(parseInt(like, 10));
-
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     Modal.confirm({
       title: '确认删除笔记？',
-      icon: <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />,
-      content: '删除后内容将无法找回，请谨慎操作。',
       okText: '确认删除',
       okType: 'danger',
-      cancelText: '取消',
       onOk: async () => {
         const result = await deleteNote({ id: parseInt(id, 10) });
         if (result === 1) {
@@ -154,6 +158,7 @@ const Post: React.FC<{
       >
         <LikeButton
           postId={id}
+          userAccount={userAccount}
           likelist={likelist}
           onLikeChange={(state) => setLikeCount(state ? likeCount + 1 : likeCount - 1)}
         />
@@ -169,47 +174,92 @@ const Post: React.FC<{
 const PersonManagePost: React.FC = () => {
   const [posts, setPosts] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [likeList, setLikeList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // --- 关注状态相关 ---
+  const [isFollowed, setIsFollowed] = useState<boolean>(false);
+  const [followLoading, setFollowLoading] = useState<boolean>(false);
+
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
-  const [likeList, setLikeList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true); // 👈 现在这里将被使用
 
   let { account } = useParams<{ account: string }>();
-  if (!account || account === ':account') {
-    account = currentUser?.userAccount;
-  }
+
+  // URL 占位符修正
+  useEffect(() => {
+    if ((!account || account === ':account') && currentUser?.userAccount) {
+      history.replace(`/personSetting/managePost/${currentUser.userAccount}`);
+    }
+  }, [account, currentUser]);
+
+  const activeAccount = account && account !== ':account' ? account : currentUser?.userAccount;
+  const isOwner = currentUser?.userAccount === activeAccount;
+
+  const fetchData = async () => {
+    if (!activeAccount) return;
+    setLoading(true);
+    try {
+      // 1. 发起数据请求
+      // 注意：这里我们同时请求了【我的关注列表】，用来判断是否关注了当前页面的主人
+      const [postsResult, userResult, likeListResult, followingsResult] = await Promise.all([
+        getUserPost({ userAccount: activeAccount }),
+        getManageUser({ userAccount: activeAccount }),
+        getLikePostsID({ id: currentUser?.id }),
+        // 只有在查看别人主页时，才去查自己的关注列表
+        !isOwner && currentUser?.userAccount
+          ? getFollowings({ account: currentUser.userAccount })
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      setPosts(Array.isArray(postsResult) ? postsResult : []);
+      setUser(userResult);
+      setLikeList(Array.isArray(likeListResult) ? likeListResult : []);
+
+      // 2. 核心逻辑：利用 getFollowings 的返回结果匹配 isFollowed
+      // 假设 followingsResult 返回的结构是 { data: [{ account: 'xxx' }, ...] }
+      if (!isOwner && followingsResult?.data) {
+        const followed = followingsResult.data.some((item: any) => item.account === activeAccount);
+        setIsFollowed(followed);
+      }
+    } catch (error) {
+      message.error('加载数据失败');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true); // 👈 开始加载
-      try {
-        const params = { userAccount: account };
-        const [postsResult, userResult, likeListResult] = await Promise.all([
-          getUserPost(params),
-          getManageUser(params),
-          getLikePostsID({ id: currentUser?.id }),
-        ]);
-
-        setPosts(Array.isArray(postsResult) ? postsResult : []);
-        setUser(userResult);
-        setLikeList(Array.isArray(likeListResult) ? likeListResult : []);
-      } catch (error) {
-        message.error('加载数据失败');
-      } finally {
-        setLoading(false); // 👈 结束加载
-      }
-    };
     fetchData();
-  }, [account, currentUser?.id]);
+  }, [activeAccount, currentUser?.id]);
 
-  const isOwner = currentUser?.userAccount === account;
+  const handleFollow = async () => {
+    if (!currentUser) {
+      message.warning('请先登录');
+      return;
+    }
+    setFollowLoading(true);
+    try {
+      const res = await Follows({
+        followerAccount: currentUser?.userAccount,
+        followingAccount: activeAccount,
+      });
+      // 这里的 res.data 通常是 toggle 后的最新状态（true/false），或者根据你的后端逻辑处理
+      if (res.code === 0) {
+        setIsFollowed(!isFollowed);
+        message.success(!isFollowed ? '关注成功' : '已取消关注');
+      }
+    } catch (e) {
+      message.error('操作失败');
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   return (
     <PageContainer title={false} ghost>
-      {/* 核心：使用 Spin 包裹内容，解决 ESLint 报错并优化体验 */}
       <Spin spinning={loading} tip="正在获取精彩内容...">
         <div style={{ maxWidth: '1200px', margin: '0 auto', minHeight: '60vh' }}>
-          {/* 顶部个人资料卡片 */}
           <Card
             bordered={false}
             style={{
@@ -241,7 +291,7 @@ const PersonManagePost: React.FC = () => {
                 </div>
                 <Space split={<Divider type="vertical" />} style={{ color: '#666' }}>
                   <Text type="secondary">
-                    账号：<Text strong>{account}</Text>
+                    账号：<Text strong>{activeAccount}</Text>
                   </Text>
                   <Text type="secondary">
                     笔记：<Text strong>{posts.length}</Text>
@@ -254,15 +304,28 @@ const PersonManagePost: React.FC = () => {
                   </Text>
                 </Space>
               </div>
-              {isOwner && (
-                <Button shape="round" onClick={() => history.push('/personSetting/infoSetting')}>
-                  编辑资料
-                </Button>
-              )}
+
+              {/* 按钮区域 */}
+              <div style={{ marginLeft: 'auto' }}>
+                {isOwner ? (
+                  <Button shape="round" onClick={() => history.push('/personSetting/infoSetting')}>
+                    编辑资料
+                  </Button>
+                ) : (
+                  <Button
+                    type={isFollowed ? 'default' : 'primary'}
+                    shape="round"
+                    loading={followLoading}
+                    icon={isFollowed ? <UserDeleteOutlined /> : <UserAddOutlined />}
+                    onClick={handleFollow}
+                  >
+                    {isFollowed ? '已关注' : '关注TA'}
+                  </Button>
+                )}
+              </div>
             </div>
           </Card>
 
-          {/* 帖子列表区 */}
           <Card
             title={<span style={{ fontSize: '18px', fontWeight: 600 }}>全部动态</span>}
             bordered={false}
@@ -279,6 +342,7 @@ const PersonManagePost: React.FC = () => {
                       like={post.likes}
                       isOwner={isOwner}
                       likelist={likeList}
+                      userAccount={post.userAccount || activeAccount}
                     />
                   </Col>
                 ))}

@@ -81,7 +81,7 @@ const LikeButton: React.FC<{
   const handleLike = async (event: React.MouseEvent) => {
     event.stopPropagation();
     if (userAccount === currentUser?.userAccount) {
-      message.warning('小提示：不能给自己点赞哦');
+      message.warning('不能给自己点赞哦！');
       return;
     }
     if (loading) return;

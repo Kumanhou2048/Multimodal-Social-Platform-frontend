@@ -293,3 +293,42 @@ export async function getLikePostsID(body: API.UserID, options?: { [key: string]
     ...(options || {}),
   });
 }
+
+//关注用户
+/** 关注用户 POST /api/Follows*/
+export async function Follows(body: API.UserAccount, options?: { [key: string]: any }) {
+  return request<any>(`/api/Follows`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
+//获取关注列表
+/** 获取关注列表 POST /api/getFollowings*/
+export async function getFollowings(body: API.getFollower, options?: { [key: string]: any }) {
+  return request<any>(`/api/getFollowings`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
+//获取粉丝列表
+/** 获取粉丝列表 POST /api/getFollowers*/
+export async function getFollowers(body: API.getFollower, options?: { [key: string]: any }) {
+  return request<any>(`/api/getFollowers`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
