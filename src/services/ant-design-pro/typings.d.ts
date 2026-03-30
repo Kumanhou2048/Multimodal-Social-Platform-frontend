@@ -93,6 +93,7 @@ declare namespace API {
     noteType?: number;
     imageCount?: number;
     imageUrls?: string[];
+    isAiGenerated?: boolean;
   };
 
   type getUserTotalPostsParams = {
@@ -178,6 +179,7 @@ declare namespace API {
     postContent: string;
     userAccount?: string;
     like?: any;
+    aiGenerated?: boolean;
   };
 
   type PostPicture = {

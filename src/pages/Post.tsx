@@ -7,7 +7,7 @@ import {
   PostLikes,
 } from '@/services/ant-design-pro/api';
 import { history } from '@@/core/history';
-import { LikeFilled, LikeOutlined, SendOutlined } from '@ant-design/icons';
+import { LikeFilled, LikeOutlined, RobotOutlined, SendOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useModel, useParams } from '@umijs/max';
 import {
@@ -16,13 +16,14 @@ import {
   Card,
   Carousel,
   Divider,
+  Empty,
   Image,
+  Input,
   List,
   message,
-  Input,
   Space,
+  Tag,
   Typography,
-  Empty,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
 
@@ -253,10 +254,12 @@ const PostDetail: React.FC = () => {
             >
               <Avatar size={48} src={posts?.posterAvatarUrl} />
               <div>
-                <Text strong style={{ fontSize: '16px', display: 'block' }}>
-                  {posts?.posterName}
-                </Text>
-                <Text type="secondary" style={{ fontSize: '12px' }}>
+                <Space align="center" size={8}>
+                  <Text strong style={{ fontSize: '16px' }}>
+                    {posts?.posterName}
+                  </Text>
+                </Space>
+                <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
                   发布于 {posts?.postTime}
                 </Text>
               </div>
@@ -278,6 +281,24 @@ const PostDetail: React.FC = () => {
           <Divider style={{ margin: '16px 0' }} />
 
           <Typography>
+            {posts?.aiGenerated && (
+              <Tag
+                icon={<RobotOutlined />}
+                color="blue"
+                style={{
+                  borderRadius: '4px',
+                  margin: 0,
+                  fontSize: '11px',
+                  lineHeight: '18px',
+                  fontWeight: 500,
+                  border: 'none',
+                  background: '#e6f7ff',
+                  color: '#1890ff',
+                }}
+              >
+                文本由 AI 生成
+              </Tag>
+            )}
             <Title level={2} style={{ marginBottom: '24px' }}>
               {posts?.postTitle}
             </Title>

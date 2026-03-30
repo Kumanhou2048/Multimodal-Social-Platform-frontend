@@ -1,17 +1,17 @@
 import {
   deleteNote,
+  Follows,
+  getFollowings,
   getLikePostsID,
   getManageUser,
   getUserPost,
   PostLikes,
-  Follows, // 关注/取消关注接口
-  getFollowings, // 👈 获取我关注的人的列表
 } from '@/services/ant-design-pro/api';
 import { history } from '@@/core/history';
 import {
+  DeleteOutlined,
   LikeFilled,
   LikeOutlined,
-  DeleteOutlined,
   UserAddOutlined,
   UserDeleteOutlined,
 } from '@ant-design/icons';
@@ -21,16 +21,16 @@ import {
   Avatar,
   Button,
   Card,
+  Col,
+  Divider,
+  Empty,
   message,
   Modal,
-  Space,
-  Typography,
   Row,
-  Col,
-  Empty,
-  Tag,
-  Divider,
+  Space,
   Spin,
+  Tag,
+  Typography,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
 

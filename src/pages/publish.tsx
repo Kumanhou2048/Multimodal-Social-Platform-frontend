@@ -1,27 +1,34 @@
-import React, { useState } from 'react';
-import { PlusOutlined, SendOutlined, PictureOutlined } from '@ant-design/icons';
+import { useModel } from '@@/exports';
+import {
+  PictureOutlined,
+  PlusOutlined,
+  SendOutlined,
+  ThunderboltOutlined, // 新增：魔棒图标
+} from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
+import type { GetProp, UploadFile, UploadProps } from 'antd';
 import {
   Button,
   Card,
+  Col,
+  Divider,
   Image,
   Input,
   message,
-  Upload,
-  Space,
-  Typography,
   Row,
-  Col,
-  Divider,
+  Space,
+  Tooltip,
+  Typography,
+  Upload,
 } from 'antd';
-import type { UploadFile, UploadProps, GetProp } from 'antd';
-import { useModel } from '@@/exports';
+import React, { useState } from 'react';
+// 注意：确保你的 api.ts 中定义了 generateAIContent 接口
 import { upLoadNote } from '@/services/ant-design-pro/api';
+import { request } from '@umijs/max';
 
 const { TextArea } = Input;
 const { Text } = Typography;
 
-// 定义 AntD 的文件类型，用于转换和校验
 type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
 
 type ImageUploadResult = {
@@ -45,9 +52,63 @@ const App: React.FC = () => {
   const [previewImage, setPreviewImage] = useState('');
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [isAiGenerated, setIsAiGenerated] = useState<boolean>(false);
 
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
+
+  /**
+   * 新增：调用后端 Qwen-Flash 生成正文
+   */
+  const handleAiGenerate = async () => {
+    if (!title.trim()) {
+      message.warning('请先输入标题哦 ✨');
+      return;
+    }
+
+    setAiLoading(true);
+    // 💡 动态提示，让加载变得有趣
+    const loadingText =
+      fileList.length > 0 ? 'AI 正在看图写文案，请稍候...' : 'AI 正在调动灵感，请稍候...';
+    const hide = message.loading(loadingText, 0);
+
+    try {
+      let base64Image = '';
+
+      // 判断是否有图片，如果有，取第一张转 Base64
+      if (fileList.length > 0 && fileList[0].originFileObj) {
+        try {
+          const fullBase64 = await getBase64(fileList[0].originFileObj as FileType);
+          base64Image = fullBase64.split(',')[1];
+        } catch (error) {
+          console.error('图片转换Base64失败:', error);
+        }
+      }
+
+      const res = await request<any>('/api/ai/generate/content/smart', {
+        method: 'POST',
+        data: {
+          title: title.trim(),
+          imageBase64: base64Image,
+        },
+      });
+
+      if (res && res.code === 0) {
+        setContent(res.data);
+        setIsAiGenerated(true);
+        message.success('灵感已送达！✨');
+      } else {
+        message.error(res?.message || 'AI 暂时没灵感，请稍后再试');
+      }
+    } catch (e) {
+      console.error('AI生成请求出错:', e);
+      message.error('网络繁忙，无法连接 AI 服务');
+    } finally {
+      hide(); // 关闭 loading 提示
+      setAiLoading(false);
+    }
+  };
 
   const handlePreview = async (file: UploadFile) => {
     if (!file.url && !file.preview) {
@@ -62,14 +123,13 @@ const App: React.FC = () => {
     setImageCount(newFileList.length);
   };
 
-  // 解决 TS2344：明确定义 beforeUpload 的逻辑和返回值类型
   const handleBeforeUpload: UploadProps['beforeUpload'] = (file) => {
     const isLt5M = file.size / 1024 / 1024 < 5;
     if (!isLt5M) {
       message.error('图片必须小于 5MB!');
-      return Upload.LIST_IGNORE; // 阻止该文件进入列表
+      return Upload.LIST_IGNORE;
     }
-    return false; // 返回 false 阻止自动上传，改为手动在 submitData 中处理
+    return false;
   };
 
   const uploadImageToBackend = async (file: FileType): Promise<string> => {
@@ -92,7 +152,6 @@ const App: React.FC = () => {
     setSubmitting(true);
     try {
       const imageUrls: string[] = [];
-      // 并行上传图片，效率更高
       const uploadPromises = fileList.map(async (file) => {
         if (file.originFileObj) {
           return await uploadImageToBackend(file.originFileObj as FileType);
@@ -109,7 +168,8 @@ const App: React.FC = () => {
         content,
         noteType: 0,
         imageCount,
-        imageUrls, // 注意：此处仍保留 imageUrls，请根据 TS2561 报错自行修改为接口定义的字段名
+        imageUrls,
+        isAiGenerated,
       });
 
       if (result > 0) {
@@ -158,7 +218,7 @@ const App: React.FC = () => {
                 onPreview={handlePreview}
                 onChange={handleChange}
                 accept="image/png, image/jpeg"
-                beforeUpload={handleBeforeUpload} // 解决 TS2344
+                beforeUpload={handleBeforeUpload}
               >
                 {fileList.length >= 5 ? null : uploadButton}
               </Upload>
@@ -184,6 +244,19 @@ const App: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   maxLength={50}
+                  suffix={
+                    <Tooltip title="AI 辅助生成正文">
+                      <Button
+                        type="text"
+                        icon={
+                          <ThunderboltOutlined style={{ color: title ? '#722ed1' : '#bfbfbf' }} />
+                        }
+                        loading={aiLoading}
+                        onClick={handleAiGenerate}
+                        style={{ border: 'none', background: 'transparent' }}
+                      />
+                    </Tooltip>
+                  }
                   style={{
                     fontSize: '24px',
                     fontWeight: 'bold',
@@ -196,7 +269,11 @@ const App: React.FC = () => {
                   variant="borderless"
                   placeholder="分享你的故事..."
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  onChange={(e) => {
+                    setContent(e.target.value);
+                    // 如果文本清空，则将ai标记为false
+                    if (!e.target.value) setIsAiGenerated(false);
+                  }}
                   autoSize={{ minRows: 8, maxRows: 15 }}
                   maxLength={500}
                   style={{
